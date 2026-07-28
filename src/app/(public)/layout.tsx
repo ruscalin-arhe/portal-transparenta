@@ -1,18 +1,66 @@
-﻿export default function PublicLayout({
+import Link from "next/link";
+import {
+  LayoutDashboard,
+  FolderKanban,
+  Map,
+  FileText,
+  MessageSquareWarning,
+  Home,
+} from "lucide-react";
+
+const nav = [
+  { href: "/", label: "Acasă", icon: Home },
+  { href: "/proiecte", label: "Proiecte", icon: FolderKanban },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/harta", label: "Hartă", icon: Map },
+  { href: "/documente", label: "Documente", icon: FileText },
+  { href: "/sesizari", label: "Sesizări", icon: MessageSquareWarning },
+];
+
+export default function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4">
-          <h1 className="text-xl font-semibold">
-            Portal Public de Transparență
-          </h1>
+    <div className="min-h-screen flex bg-background text-foreground">
+      {/* Sidebar */}
+      <aside className="w-60 border-r bg-card hidden md:flex flex-col">
+        <div className="p-5 border-b">
+          <Link href="/" className="font-semibold text-lg leading-tight">
+            Portal Transparență
+          </Link>
+          <p className="text-xs text-muted-foreground mt-1">
+            Coridor Verde-Digital
+          </p>
         </div>
-      </header>
-      <main className="container mx-auto px-4 py-8">{children}</main>
+        <nav className="flex-1 p-3 space-y-1" aria-label="Navigare principală">
+          {nav.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-muted transition-colors"
+            >
+              <item.icon className="size-4 shrink-0" aria-hidden="true" />
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+      </aside>
+
+      {/* Main */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Mobile top bar */}
+        <header className="md:hidden border-b px-4 py-3 flex items-center justify-between">
+          <Link href="/" className="font-semibold">
+            Portal Transparență
+          </Link>
+        </header>
+
+        <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
