@@ -20,22 +20,34 @@ model Sesizare {
 }
 
 model Proiect {
-  id           String   @id @default(cuid())
-  slug         String   @unique
-  nume         String
-  status       String
-  localitate   String
-  valoareText  String
-  valoareMil   Float?
-  progres      Int      @default(0)
-  descriere    String
-  dataStart    String?
-  dataEstimata String?
-  beneficiar   String?
-  categorie    String?
-  lat          Float?
-  lng          Float?
-  published    Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                String   @id @default(cuid())
+  slug              String   @unique
+  nume              String
+  status            String
+  localitate        String
+  valoareText       String
+  valoareMil        Float?
+  progres           Int      @default(0)
+  descriere         String
+  dataStart         String?
+  dataEstimata      String?
+  beneficiar        String?
+  categorie         String?
+  lat               Float?
+  lng               Float?
+  published         Boolean  @default(true)
+
+  bugetAlocatMil    Float?
+  bugetCheltuitMil  Float?
+  depasireBugetMil  Float?
+  zileIntarziere    Int      @default(0)
+  progresFizic      Int?
+  progresFinanciar  Int?
+  risc              String?
+  sursaFinantare    String?
+  contractor        String?
+  ultimaActualizare String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }

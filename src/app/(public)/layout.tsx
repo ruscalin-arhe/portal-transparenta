@@ -12,6 +12,7 @@ import { NavAuth } from "@/components/shared/nav-auth";
 const nav = [
   { href: "/", label: "Acasa", icon: Home },
   { href: "/proiecte", label: "Proiecte", icon: FolderKanban },
+  { href: "/analiza", label: "Analiza", icon: LayoutDashboard },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/harta", label: "Harta", icon: Map },
   { href: "/documente", label: "Documente", icon: FileText },

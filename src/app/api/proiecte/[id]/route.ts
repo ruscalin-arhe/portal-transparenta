@@ -3,12 +3,20 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+const LEGACY: Record<string, string> = {
+  "1": "retea-electrica-nord",
+  "2": "infrastructura-digitala-est",
+  "3": "reabilitare-dj152",
+};
+
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id: raw } = await context.params;
+    const id = LEGACY[raw] ?? raw;
+
     const p = await prisma.proiect.findFirst({
       where: {
         published: true,
@@ -34,6 +42,16 @@ export async function GET(
       categorie: p.categorie,
       lat: p.lat,
       lng: p.lng,
+      bugetAlocatMil: p.bugetAlocatMil,
+      bugetCheltuitMil: p.bugetCheltuitMil,
+      depasireBugetMil: p.depasireBugetMil,
+      zileIntarziere: p.zileIntarziere,
+      progresFizic: p.progresFizic,
+      progresFinanciar: p.progresFinanciar,
+      risc: p.risc,
+      sursaFinantare: p.sursaFinantare,
+      contractor: p.contractor,
+      ultimaActualizare: p.ultimaActualizare,
     });
   } catch (e) {
     console.error(e);

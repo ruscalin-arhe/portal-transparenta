@@ -12,64 +12,101 @@ const proiecte = [
     valoareMil: 12.4,
     progres: 67,
     descriere:
-      "Proiect de modernizare a rețelei electrice de medie tensiune, cu înlocuirea cablurilor și modernizarea posturilor de transformare.",
+      "Modernizare rețea medie tensiune: cabluri și posturi de transformare.",
     dataStart: "15.03.2025",
-    dataEstimata: "30.11.2026",
-    beneficiar: "Operator de distribuție energie",
-    categorie: "Infrastructură energetică",
-    lat: 46.7712,
-    lng: 23.6236,
-  },
-  {
-    slug: "infrastructura-digitala-est",
-    nume: "Infrastructură digitală – Regiunea Est",
-    status: "Planificat",
-    localitate: "Iași",
-    valoareText: "8.1 mil. RON",
-    valoareMil: 8.1,
-    progres: 15,
-    descriere:
-      "Dezvoltarea infrastructurii de comunicații pentru servicii digitale publice.",
-    dataStart: "01.09.2026",
-    dataEstimata: "31.12.2027",
-    beneficiar: "Autoritate publică pentru digitalizare",
-    categorie: "Digitalizare",
-    lat: 47.1585,
-    lng: 27.6014,
-  },
-  {
-    slug: "reabilitare-dj152",
-    nume: "Reabilitare drum județean DJ152",
-    status: "Finalizat",
-    localitate: "Târgu Mureș",
-    valoareText: "5.7 mil. RON",
-    valoareMil: 5.7,
-    progres: 100,
-    descriere:
-      "Reabilitare completă a drumului județean pe aproximativ 18 km, inclusiv semnalizare și elemente de siguranță.",
-    dataStart: "10.04.2024",
-    dataEstimata: "20.12.2025",
-    beneficiar: "Consiliul Județean",
-    categorie: "Transport",
-    lat: 46.5427,
-    lng: 24.5575,
-  },
-];
+    dataEstimata: "30.11
+cat > src/app/api/proiecte/route.ts << 'ENDFILE'
+import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-async function main() {
-  for (const p of proiecte) {
-    await prisma.proiect.upsert({
-      where: { slug: p.slug },
-      update: p,
-      create: p,
-    });
-  }
-  console.log("Seed OK:", proiecte.length, "proiecte");
+export const dynamic = "force-dynamic";
+
+function norm(s: string) {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .trim();
 }
 
-main()
-  .catch((e) => {
+function mapProiect(p: {
+  slug: string;
+  nume: string;
+  status: string;
+  localitate: string;
+  valoareText: string;
+  progres: number;
+  descriere: string;
+  dataStart: string | null;
+  dataEstimata: string | null;
+  beneficiar: string | null;
+  categorie: string | null;
+  lat: number | null;
+  lng: number | null;
+  bugetAlocatMil: number | null;
+  bugetCheltuitMil: number | null;
+  depasireBugetMil: number | null;
+  zileIntarziere: number;
+  progresFizic: number | null;
+  progresFinanciar: number | null;
+  risc: string | null;
+  sursaFinantare: string | null;
+  contractor: string | null;
+  ultimaActualizare: string | null;
+}) {
+  return {
+    id: p.slug,
+    nume: p.nume,
+    status: p.status,
+    localitate: p.localitate,
+    valoare: p.valoareText,
+    progres: p.progres,
+    descriere: p.descriere,
+    dataStart: p.dataStart,
+    dataEstimata: p.dataEstimata,
+    beneficiar: p.beneficiar,
+    categorie: p.categorie,
+    lat: p.lat,
+    lng: p.lng,
+    bugetAlocatMil: p.bugetAlocatMil,
+    bugetCheltuitMil: p.bugetCheltuitMil,
+    depasireBugetMil: p.depasireBugetMil,
+    zileIntarziere: p.zileIntarziere,
+    progresFizic: p.progresFizic,
+    progresFinanciar: p.progresFinanciar,
+    risc: p.risc,
+    sursaFinantare: p.sursaFinantare,
+    contractor: p.contractor,
+    ultimaActualizare: p.ultimaActualizare,
+  };
+}
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const status = searchParams.get("status");
+    const localitate = searchParams.get("localitate");
+
+    const all = await prisma.proiect.findMany({
+      where: { published: true },
+      orderBy: { nume: "asc" },
+    });
+
+    let data = all;
+    if (status && status !== "all") {
+      const n = norm(status);
+      data = data.filter((p) => norm(p.status) === n);
+    }
+    if (localitate && localitate !== "all") {
+      const n = norm(localitate);
+      data = data.filter((p) => norm(p.localitate).includes(n));
+    }
+
+    return NextResponse.json(data.map(mapProiect), {
+      headers: { "Cache-Control": "no-store" },
+    });
+  } catch (e) {
     console.error(e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+    return NextResponse.json({ error: "Eroare server" }, { status: 500 });
+  }
+}

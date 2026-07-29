@@ -1,45 +1,36 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import type { Proiect } from "@/lib/data/proiecte";
 
-type Filters = {
-  status?: string;
-  localitate?: string;
+export type ProiectDTO = {
+  id: string;
+  nume: string;
+  status: string;
+  localitate: string;
+  valoare: string;
+  progres: number;
+  descriere: string;
+  dataStart?: string | null;
+  dataEstimata?: string | null;
+  beneficiar?: string | null;
+  categorie?: string | null;
+  lat?: number | null;
+  lng?: number | null;
 };
 
-async function fetchProiecte(filters: Filters = {}): Promise<Proiect[]> {
-  const params = new URLSearchParams();
-  if (filters.status && filters.status !== "all") {
-    params.set("status", filters.status);
-  }
-  if (filters.localitate && filters.localitate !== "all") {
-    params.set("localitate", filters.localitate);
-  }
-
-  const qs = params.toString();
-  const res = await fetch(`/api/proiecte${qs ? `?${qs}` : ""}`);
-  if (!res.ok) throw new Error("Eroare la incarcarea proiectelor");
-  return res.json();
-}
-
-export function useProiecte(filters: Filters = {}) {
+export function useProiecte(status = "all", localitate = "all") {
   return useQuery({
-    queryKey: ["proiecte", filters],
-    queryFn: () => fetchProiecte(filters),
-  });
-}
-
-async function fetchProiect(id: string): Promise<Proiect> {
-  const res = await fetch(`/api/proiecte/${id}`);
-  if (!res.ok) throw new Error("Proiect negasit");
-  return res.json();
-}
-
-export function useProiect(id: string) {
-  return useQuery({
-    queryKey: ["proiect", id],
-    queryFn: () => fetchProiect(id),
-    enabled: !!id,
+    queryKey: ["proiecte", status, localitate],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (status && status !== "all") params.set("status", status);
+      if (localitate && localitate !== "all") params.set("localitate", localitate);
+      const q = params.toString();
+      const res = await fetch(`/api/proiecte${q ? `?${q}` : ""}`, {
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("Eroare incarcare proiecte");
+      return res.json() as Promise<ProiectDTO[]>;
+    },
   });
 }
