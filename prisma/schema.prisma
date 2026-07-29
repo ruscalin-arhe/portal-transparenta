@@ -20,34 +20,87 @@ model Sesizare {
 }
 
 model Proiect {
-  id                String   @id @default(cuid())
-  slug              String   @unique
-  nume              String
-  status            String
-  localitate        String
-  valoareText       String
-  valoareMil        Float?
-  progres           Int      @default(0)
-  descriere         String
-  dataStart         String?
-  dataEstimata      String?
-  beneficiar        String?
-  categorie         String?
-  lat               Float?
-  lng               Float?
-  published         Boolean  @default(true)
+  id               String     @id @default(cuid())
+  slug             String     @unique
+  nume             String
+  status           String
+  localitate       String
+  valoareText      String
+  valoareMil       Float?
+  progres          Int        @default(0)
+  descriere        String
+  dataStart        String?
+  dataEstimata     String?
+  beneficiar       String?
+  categorie        String?
+  lat              Float?
+  lng              Float?
+  published        Boolean    @default(true)
+  bugetAlocatMil   Float?
+  bugetCheltuitMil Float?
+  depasireB
+cat > prisma/seed-documente.ts << 'ENDFILE'
+import { PrismaClient } from "@prisma/client";
 
-  bugetAlocatMil    Float?
-  bugetCheltuitMil  Float?
-  depasireBugetMil  Float?
-  zileIntarziere    Int      @default(0)
-  progresFizic      Int?
-  progresFinanciar  Int?
-  risc              String?
-  sursaFinantare    String?
-  contractor        String?
-  ultimaActualizare String?
+const prisma = new PrismaClient();
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+async function main() {
+  const proiecte = await prisma.proiect.findMany();
+  const bySlug = Object.fromEntries(proiecte.map((p) => [p.slug, p.id]));
+
+  const docs = [
+    {
+      titlu: "Raport progres trimestrial – proiecte publice Q2 2026",
+      tip: "PDF",
+      data: "15.06.2026",
+      dimensiune: "2.4 MB",
+      url: "#",
+      proiectId: bySlug["retea-electrica-nord"] || null,
+    },
+    {
+      titlu: "Buget detaliat proiecte de interes public 2026",
+      tip: "XLSX",
+      data: "01.03.2026",
+      dimensiune: "890 KB",
+      url: "#",
+      proiectId: null,
+    },
+    {
+      titlu: "Studiu de fezabilitate – Sector Nord",
+      tip: "PDF",
+      data: "20.01.2026",
+      dimensiune: "5.1 MB",
+      url: "#",
+      proiectId: bySlug["retea-electrica-nord"] || null,
+    },
+    {
+      titlu: "Hotărâre de aprobare – program investiții publice",
+      tip: "PDF",
+      data: "12.11.2025",
+      dimensiune: "320 KB",
+      url: "#",
+      proiectId: null,
+    },
+    {
+      titlu: "Proces-verbal recepție DJ152",
+      tip: "PDF",
+      data: "20.12.2025",
+      dimensiune: "1.1 MB",
+      url: "#",
+      proiectId: bySlug["reabilitare-dj152"] || null,
+    },
+  ];
+
+  await prisma.document.deleteMany({});
+  for (const d of docs) {
+    await prisma.document.create({ data: d });
+  }
+  console.log("Seed documente OK:", docs.length);
 }
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());

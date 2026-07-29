@@ -1,62 +1,95 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, FileSpreadsheet } from "lucide-react";
-import { useDocumente } from "@/hooks/use-documente";
+import { FileText } from "lucide-react";
+
+type Doc = {
+  id: string;
+  titlu: string;
+  tip: string;
+  data: string | null;
+  dimensiune: string | null;
+  url: string;
+  proiectSlug: string | null;
+  proiectNume: string | null;
+};
 
 export default function DocumentePage() {
-  const { data: documente = [], isLoading, isError } = useDocumente();
+  const [docs, setDocs] = useState([] as Doc[]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null as string | null);
+
+  useEffect(() => {
+    fetch("/api/documente", { cache: "no-store" })
+      .then((r) => {
+        if (!r.ok) throw new Error("Eroare incarcare");
+        return r.json();
+      })
+      .then(setDocs)
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Documente</h1>
-        <p className="text-muted-foreground mt-1">
-          Documente oficiale si rapoarte publice
+        <p className="text-muted-foreground mt-2">
+          Documente publice legate de proiecte sau de interes general
         </p>
       </div>
 
-      {isLoading && (
-        <p className="text-sm text-muted-foreground">Se incarca documentele...</p>
-      )}
-      {isError && (
-        <p className="text-sm text-destructive">Eroare la incarcarea documentelor.</p>
-      )}
+      {loading && <p className="text-muted-foreground">Se incarca...</p>}
+      {error && <p className="text-destructive">{error}</p>}
 
       <div className="grid gap-3">
-        {documente.map((doc, i) => {
-          const Icon = doc.tip === "XLSX" ? FileSpreadsheet : FileText;
-          return (
-            <motion.div
-              key={doc.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-            >
-              <Card className="hover:shadow-sm transition-shadow">
-                <CardContent className="flex items-center gap-4 py-4">
-                  <div className="rounded-lg bg-primary/10 p-2.5 text-primary shrink-0">
-                    <Icon className="size-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{doc.titlu}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {doc.tip} · {doc.dimensiune} · {doc.data}
+        {docs.map((d) => (
+          <Card key={d.id}>
+            <CardHeader className="pb-2">
+              <div className="flex items-start gap-3">
+                <FileText className="size-5 mt-0.5 text-muted-foreground shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="text-base">{d.titlu}</CardTitle>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {d.tip}
+                    {d.data ? ` · ${d.data}` : ""}
+                    {d.dimensiune ? ` · ${d.dimensiune}` : ""}
+                  </p>
+                  {d.proiectSlug && (
+                    <p className="text-xs mt-1">
+                      Proiect:{" "}
+                      <Link
+                        href={`/proiecte/${d.proiectSlug}`}
+                        className="underline hover:text-foreground text-muted-foreground"
+                      >
+                        {d.proiectNume}
+                      </Link>
                     </p>
-                  </div>
-                  <a href={doc.url}>
-                    <Button variant="outline" size="sm" className="gap-1.5 shrink-0">
-                      <Download className="size-3.5" />
-                      Descarca
-                    </Button>
+                  )}
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={d.url === "#" ? undefined : d.url} onClick={(e) => {
+                    if (d.url === "#") e.preventDefault();
+                  }}>
+                    Descarca
                   </a>
-                </CardContent>
-              </Card>
-            </motion.div>
-          );
-        })}
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-0" />
+          </Card>
+        ))}
+        {!loading && docs.length === 0 && (
+          <p className="text-muted-foreground text-sm">Niciun document.</p>
+        )}
       </div>
     </div>
   );
