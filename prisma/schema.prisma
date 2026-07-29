@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Sesizare {
+  id        String   @id @default(cuid())
+  nume      String
+  email     String
+  telefon   String?
+  subiect   String
+  mesaj     String
+  status    String   @default("noua")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
