@@ -12,9 +12,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
+const FILTERS = [
+  { value: "all", label: "Toate" },
+  { value: "În derulare", label: "In derulare" },
+  { value: "Planificat", label: "Planificat" },
+  { value: "Finalizat", label: "Finalizat" },
+];
+
 export default function ProiectePage() {
   const [status, setStatus] = useState("all");
-  const { data, isLoading, isError } = useProiecte(status, "all");
+  const { data, isLoading, isError, isFetching } = useProiecte(status, "all");
 
   return (
     <div className="space-y-8">
@@ -26,19 +33,22 @@ export default function ProiectePage() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {["all", "În derulare", "Planificat", "Finalizat"].map((s) => (
+        {FILTERS.map((f) => (
           <Button
-            key={s}
+            key={f.value}
             size="sm"
-            variant={status === s ? "default" : "outline"}
-            onClick={() => setStatus(s)}
+            variant={status === f.value ? "default" : "outline"}
+            onClick={() => setStatus(f.value)}
+            type="button"
           >
-            {s === "all" ? "Toate" : s}
+            {f.label}
           </Button>
         ))}
       </div>
 
-      {isLoading && <p className="text-muted-foreground">Se incarca...</p>}
+      {(isLoading || isFetching) && (
+        <p className="text-muted-foreground text-sm">Se incarca...</p>
+      )}
       {isError && <p className="text-destructive">Eroare la incarcare</p>}
 
       <div className="grid gap-4">
@@ -73,6 +83,9 @@ export default function ProiectePage() {
             </CardContent>
           </Card>
         ))}
+        {!isLoading && data?.length === 0 && (
+          <p className="text-muted-foreground text-sm">Niciun proiect.</p>
+        )}
       </div>
     </div>
   );
