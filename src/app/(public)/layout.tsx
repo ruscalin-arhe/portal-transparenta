@@ -7,14 +7,15 @@ import {
   MessageSquareWarning,
   Home,
 } from "lucide-react";
+import { NavAuth } from "@/components/shared/nav-auth";
 
 const nav = [
-  { href: "/", label: "Acasă", icon: Home },
+  { href: "/", label: "Acasa", icon: Home },
   { href: "/proiecte", label: "Proiecte", icon: FolderKanban },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/harta", label: "Hartă", icon: Map },
+  { href: "/harta", label: "Harta", icon: Map },
   { href: "/documente", label: "Documente", icon: FileText },
-  { href: "/sesizari", label: "Sesizări", icon: MessageSquareWarning },
+  { href: "/sesizari", label: "Sesizari", icon: MessageSquareWarning },
 ];
 
 export default function PublicLayout({
@@ -27,13 +28,13 @@ export default function PublicLayout({
       <aside className="w-60 border-r bg-card hidden md:flex flex-col">
         <div className="p-5 border-b">
           <Link href="/" className="font-semibold text-lg leading-tight">
-            Portal Transparență
+            Portal Transparenta
           </Link>
           <p className="text-xs text-muted-foreground mt-1">
-            Proiecte publice · informare societate civilă
+            Proiecte publice · informare societate civila
           </p>
         </div>
-        <nav className="flex-1 p-3 space-y-1" aria-label="Navigare principală">
+        <nav className="flex-1 p-3 space-y-1" aria-label="Navigare principala">
           {nav.map((item) => (
             <Link
               key={item.href}
@@ -45,13 +46,17 @@ export default function PublicLayout({
             </Link>
           ))}
         </nav>
+        <div className="p-3 border-t space-y-1">
+          <NavAuth />
+        </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="md:hidden border-b px-4 py-3 flex items-center justify-between">
+        <header className="md:hidden border-b px-4 py-3 flex items-center justify-between gap-3">
           <Link href="/" className="font-semibold">
-            Portal Transparență
+            Portal Transparenta
           </Link>
+          <NavAuth />
         </header>
         <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
           {children}
