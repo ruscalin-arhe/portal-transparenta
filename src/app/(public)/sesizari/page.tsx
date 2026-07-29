@@ -90,7 +90,7 @@ export default function SesizariPage() {
           Sesizari
         </h1>
         <p className="text-muted-foreground mt-1">
-          Trimite o sesizare publica legata de proiectele din coridor
+          Trimite o sesizare publica legata de proiecte
         </p>
       </div>
 
