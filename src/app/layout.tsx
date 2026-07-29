@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/shared/providers";
@@ -14,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Portal Public de Transparență – Coridorul Verde-Digital",
-  description: "Portal public de transparență pentru proiecte, progres și date financiare",
+  title: "Portal Public de Transparență",
+  description:
+    "Portal de informare publică privind proiectele de interes public, progresul, datele financiare și sesizările cetățenilor.",
 };
 
 export default function RootLayout({
@@ -25,7 +26,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ro">
-      <body className={geistSans.variable + " " + geistMono.variable + " antialiased"}>
+      <body
+        className={
+          geistSans.variable + " " + geistMono.variable + " antialiased"
+        }
+      >
         <Providers>{children}</Providers>
       </body>
     </html>

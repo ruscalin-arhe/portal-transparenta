@@ -10,7 +10,7 @@ export type DocumentPublic = {
 export const documente: DocumentPublic[] = [
   {
     id: "1",
-    titlu: "Raport progres Q2 2026 – Coridor Verde-Digital",
+    titlu: "Raport progres trimestrial – proiecte publice Q2 2026",
     tip: "PDF",
     data: "15.06.2026",
     dimensiune: "2.4 MB",
@@ -18,7 +18,7 @@ export const documente: DocumentPublic[] = [
   },
   {
     id: "2",
-    titlu: "Buget detaliat proiecte 2026",
+    titlu: "Buget detaliat proiecte de interes public 2026",
     tip: "XLSX",
     data: "01.03.2026",
     dimensiune: "890 KB",
@@ -34,7 +34,7 @@ export const documente: DocumentPublic[] = [
   },
   {
     id: "4",
-    titlu: "Hotarare aprobare coridor",
+    titlu: "Hotărâre de aprobare – program investiții publice",
     tip: "PDF",
     data: "12.11.2025",
     dimensiune: "320 KB",

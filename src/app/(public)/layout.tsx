@@ -24,14 +24,13 @@ export default function PublicLayout({
 }) {
   return (
     <div className="min-h-screen flex bg-background text-foreground">
-      {/* Sidebar */}
       <aside className="w-60 border-r bg-card hidden md:flex flex-col">
         <div className="p-5 border-b">
           <Link href="/" className="font-semibold text-lg leading-tight">
             Portal Transparență
           </Link>
           <p className="text-xs text-muted-foreground mt-1">
-            Coridor Verde-Digital
+            Proiecte publice · informare societate civilă
           </p>
         </div>
         <nav className="flex-1 p-3 space-y-1" aria-label="Navigare principală">
@@ -48,15 +47,12 @@ export default function PublicLayout({
         </nav>
       </aside>
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile top bar */}
         <header className="md:hidden border-b px-4 py-3 flex items-center justify-between">
           <Link href="/" className="font-semibold">
             Portal Transparență
           </Link>
         </header>
-
         <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
           {children}
         </main>
