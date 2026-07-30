@@ -10,7 +10,7 @@ import {
   type MapFilterState,
 } from "@/components/harta/map-filters";
 import type { ProiectMap } from "@/components/harta/leaflet-map";
-import { normalizeRisc } from "@/lib/risc-colors";
+import { normalizeRisc, type NivelRisc } from "@/lib/risc-colors";
 
 const LeafletMap = dynamic(() => import("@/components/harta/leaflet-map"), {
   ssr: false,
@@ -62,6 +62,37 @@ function HartaInner() {
     return Array.from(s).sort();
   }, [proiecte]);
 
+  const counts = useMemo(() => {
+    const c: Partial<Record<NivelRisc | "all", number>> = {
+      all: proiecte.length,
+      scazut: 0,
+      mediu: 0,
+      ridicat: 0,
+      nespecificat: 0,
+    };
+    for (const p of proiecte) {
+      const k = normalizeRisc(p.risc);
+      c[k] = (c[k] || 0) + 1;
+    }
+    return c;
+  }, [proiecte]);
+
+  const legendActive: NivelRisc | "all" =
+    filters.riscuri.length === 1 ? filters.riscuri[0] : "all";
+
+  function onLegendFilter(v: NivelRisc | "all") {
+    if (v === "all") {
+      setFilters((f) => ({ ...f, riscuri: [] }));
+      return;
+    }
+    setFilters((f) => ({
+      ...f,
+      riscuri: f.riscuri.includes(v)
+        ? f.riscuri.filter((x) => x !== v)
+        : [...f.riscuri, v],
+    }));
+  }
+
   if (err) return <p className="text-destructive">{err}</p>;
 
   return (
@@ -81,7 +112,12 @@ function HartaInner() {
       />
 
       <LeafletMap proiecte={filtered} focusId={focus} />
-      <RiscLegend />
+
+      <RiscLegend
+        activeFilter={legendActive}
+        onFilterChange={onLegendFilter}
+        counts={counts}
+      />
     </div>
   );
 }
