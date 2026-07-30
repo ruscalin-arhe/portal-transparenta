@@ -46,6 +46,10 @@ model Proiect {
   sursaFinantare    String?
   contractor        String?
   ultimaActualizare String?
+  programCod        String?
+  componentaPNRR    String?
+  sourceUrl         String?
+  sourceRetrievedAt DateTime?
   documente         Document[]
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
@@ -63,4 +67,23 @@ model Document {
   proiect    Proiect? @relation(fields: [proiectId], references: [id], onDelete: SetNull)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+model PnrrPlata {
+  id            String   @id @default(cuid())
+  componenta    String?
+  investitie    String?
+  beneficiar    String?
+  suma          Float?
+  moneda        String?  @default("RON")
+  dataPlata     String?
+  judet         String?
+  rawJson       String?
+  sourceUrl     String
+  sourceFile    String?
+  retrievedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  @@index([componenta])
+  @@index([judet])
 }

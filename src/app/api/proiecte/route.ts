@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 function norm(s: string) {
   return s
     .toLowerCase()
     .normalize("NFD")
-    .replace(/\p{M}/gu, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .trim();
 }
 
@@ -23,7 +24,6 @@ export async function GET(request: Request) {
     });
 
     let data = all;
-
     if (status && status !== "all") {
       const n = norm(status);
       data = data.filter((p) => norm(p.status) === n);
@@ -47,13 +47,20 @@ export async function GET(request: Request) {
       categorie: p.categorie,
       lat: p.lat,
       lng: p.lng,
+      bugetAlocatMil: p.bugetAlocatMil,
+      bugetCheltuitMil: p.bugetCheltuitMil,
+      depasireBugetMil: p.depasireBugetMil,
+      zileIntarziere: p.zileIntarziere,
+      progresFizic: p.progresFizic,
+      progresFinanciar: p.progresFinanciar,
+      risc: p.risc,
+      sursaFinantare: p.sursaFinantare,
+      contractor: p.contractor,
+      ultimaActualizare: p.ultimaActualizare,
     }));
 
     return NextResponse.json(mapped, {
-      headers: {
-        "Cache-Control": "no-store",
-        "X-Content-Type-Options": "nosniff",
-      },
+      headers: { "Cache-Control": "no-store" },
     });
   } catch (e) {
     console.error(e);
