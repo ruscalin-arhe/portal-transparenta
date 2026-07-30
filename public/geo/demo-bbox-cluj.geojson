@@ -1,0 +1,19 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Zona demo Cluj" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [23.5, 46.7],
+          [23.7, 46.7],
+          [23.7, 46.85],
+          [23.5, 46.85],
+          [23.5, 46.7]
+        ]]
+      }
+    }
+  ]
+}
