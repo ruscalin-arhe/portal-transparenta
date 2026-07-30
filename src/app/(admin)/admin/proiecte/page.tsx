@@ -24,8 +24,6 @@ type Proiect = {
   progresFizic: number | null;
   progresFinanciar: number | null;
   risc: string | null;
-  contractor: string | null;
-  sursaFinantare: string | null;
   ultimaActualizare: string | null;
   published: boolean;
 };
@@ -59,7 +57,11 @@ export default function AdminProiectePage() {
     load();
   }, []);
 
-  function updateLocal(id: string, field: keyof Proiect, value: string | number | boolean | null) {
+  function updateLocal(
+    id: string,
+    field: keyof Proiect,
+    value: string | number | boolean | null
+  ) {
     setLista((prev) =>
       prev.map((p) => (p.id === id ? { ...p, [field]: value } : p))
     );
@@ -82,8 +84,6 @@ export default function AdminProiectePage() {
           progresFizic: p.progresFizic,
           progresFinanciar: p.progresFinanciar,
           risc: p.risc,
-          contractor: p.contractor,
-          sursaFinantare: p.sursaFinantare,
           ultimaActualizare: p.ultimaActualizare,
           published: p.published,
         }),
@@ -104,7 +104,6 @@ export default function AdminProiectePage() {
   if (loading) {
     return <p className="text-muted-foreground">Se incarca proiectele...</p>;
   }
-
   if (error) {
     return <p className="text-destructive">{error}</p>;
   }
@@ -117,7 +116,6 @@ export default function AdminProiectePage() {
           Actualizeaza progres, intarzieri, risc si date financiare
         </p>
       </div>
-
       {msg && <p className="text-sm text-muted-foreground">{msg}</p>}
 
       <div className="space-y-4">
@@ -205,7 +203,7 @@ export default function AdminProiectePage() {
                 />
               </div>
               <div className="space-y-1">
-                <Label>Depasire buget (mil.)</Label>
+                <Label>Depasire (mil.)</Label>
                 <Input
                   type="number"
                   step="0.1"
@@ -220,41 +218,16 @@ export default function AdminProiectePage() {
                 />
               </div>
               <div className="space-y-1">
-                <Label>Progres fizic %</Label>
-                <Input
-                  type="number"
-                  value={p.progresFizic ?? ""}
-                  onChange={(e) =>
-                    updateLocal(
-                      p.id,
-                      "progresFizic",
-                      e.target.value === "" ? null : Number(e.target.value)
-                    )
-                  }
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Progres financiar %</Label>
-                <Input
-                  type="number"
-                  value={p.progresFinanciar ?? ""}
-                  onChange={(e) =>
-                    updateLocal(
-                      p.id,
-                      "progresFinanciar",
-                      e.target.value === "" ? null : Number(e.target.value)
-                    )
-                  }
-                />
-              </div>
-              <div className="space-y-1 sm:col-span-2">
                 <Label>Ultima actualizare</Label>
                 <Input
                   value={p.ultimaActualizare ?? ""}
                   onChange={(e) =>
-                    updateLocal(p.id, "ultimaActualizare", e.target.value || null)
+                    updateLocal(
+                      p.id,
+                      "ultimaActualizare",
+                      e.target.value || null
+                    )
                   }
-                  placeholder="ex. 30.07.2026"
                 />
               </div>
               <div className="flex items-end">
