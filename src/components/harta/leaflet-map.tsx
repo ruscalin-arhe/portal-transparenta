@@ -13,7 +13,7 @@ import {
 import L from "leaflet";
 import Link from "next/link";
 import "leaflet/dist/leaflet.css";
-import { riscColor } from "@/lib/risc-colors";
+import { riscColor, normalizeRisc } from "@/lib/risc-colors";
 
 export type ProiectMap = {
   id: string;
@@ -85,6 +85,7 @@ const ProjectMarker = memo(function ProjectMarker({
   focused: boolean;
 }) {
   const color = riscColor(p.risc);
+  const nivel = normalizeRisc(p.risc);
 
   return (
     <>
@@ -94,32 +95,39 @@ const ProjectMarker = memo(function ProjectMarker({
         pathOptions={{
           color: focused ? "#ffffff" : color,
           fillColor: color,
-          fillOpacity: focused ? 0.95 : 0.75,
+          fillOpacity: focused ? 0.95 : 0.8,
           weight: focused ? 3 : 2,
         }}
       />
       <Marker position={[p.lat, p.lng]} icon={markerIcon}>
         <Popup>
-          <div style={{ minWidth: 180 }}>
-            <strong>{p.nume}</strong>
-            <br />
-            {p.localitate} · {p.status}
-            <br />
-            Progres: {p.progres}%
-            {p.risc ? (
-              <>
-                <br />
-                Risc: {p.risc}
-              </>
-            ) : null}
-            {p.zileIntarziere != null && p.zileIntarziere > 0 ? (
-              <>
-                <br />
-                Intarziere: {p.zileIntarziere} zile
-              </>
-            ) : null}
-            <br />
-            <Link href={`/proiecte/${p.id}`}>Detalii proiect</Link>
+          <div style={{ minWidth: 200 }}>
+            <strong style={{ color }}>{p.nume}</strong>
+            <div style={{ marginTop: 6, fontSize: 13, lineHeight: 1.45 }}>
+              <div>
+                {p.localitate} · {p.status}
+              </div>
+              <div>Progres: {p.progres}%</div>
+              <div style={{ color, fontWeight: 600, marginTop: 4 }}>
+                Risc: {p.risc || nivel}
+              </div>
+              {p.zileIntarziere != null && p.zileIntarziere > 0 ? (
+                <div style={{ color }}>Intarziere: {p.zileIntarziere} zile</div>
+              ) : null}
+              {p.depasireBugetMil != null && p.depasireBugetMil > 0 ? (
+                <div style={{ color }}>
+                  Depasire buget: +{p.depasireBugetMil} mil. RON
+                </div>
+              ) : null}
+            </div>
+            <div style={{ marginTop: 8 }}>
+              <Link
+                href={`/proiecte/${p.id}`}
+                style={{ color, fontWeight: 600, textDecoration: "underline" }}
+              >
+                Detalii →
+              </Link>
+            </div>
           </div>
         </Popup>
       </Marker>
@@ -164,7 +172,6 @@ export default function LeafletMap({
         center={center}
         zoom={15}
         scrollWheelZoom
-        preferCanvas
         style={{ height: "100%", width: "100%" }}
         className="z-0"
       >
@@ -180,7 +187,7 @@ export default function LeafletMap({
           </LayersControl.BaseLayer>
           <LayersControl.BaseLayer name="OpenStreetMap">
             <TileLayer
-              attribution='&copy; OpenStreetMap'
+              attribution="OpenStreetMap"
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               updateWhenZooming={false}
               keepBuffer={2}
