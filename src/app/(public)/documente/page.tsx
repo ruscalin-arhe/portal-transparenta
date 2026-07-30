@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Card,
-  CardContent,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -29,9 +28,12 @@ export default function DocumentePage() {
 
   useEffect(() => {
     fetch("/api/documente", { cache: "no-store" })
-      .then((r) => {
-        if (!r.ok) throw new Error("Eroare incarcare");
-        return r.json();
+      .then(async (r) => {
+        const body = await r.json();
+        if (!r.ok) {
+          throw new Error(body.detail || body.error || "Eroare incarcare");
+        }
+        return body as Doc[];
       })
       .then(setDocs)
       .catch((e) => setError(e.message))
@@ -48,7 +50,11 @@ export default function DocumentePage() {
       </div>
 
       {loading && <p className="text-muted-foreground">Se incarca...</p>}
-      {error && <p className="text-destructive">{error}</p>}
+      {error && (
+        <p className="text-destructive text-sm">
+          Eroare incarcare{error ? `: ${error}` : ""}
+        </p>
+      )}
 
       <div className="grid gap-3">
         {docs.map((d) => (
@@ -68,26 +74,29 @@ export default function DocumentePage() {
                       Proiect:{" "}
                       <Link
                         href={`/proiecte/${d.proiectSlug}`}
-                        className="underline hover:text-foreground text-muted-foreground"
+                        className="underline text-muted-foreground hover:text-foreground"
                       >
                         {d.proiectNume}
                       </Link>
                     </p>
                   )}
                 </div>
-                <Button variant="outline" size="sm" asChild>
-                  <a href={d.url === "#" ? undefined : d.url} onClick={(e) => {
-                    if (d.url === "#") e.preventDefault();
-                  }}>
-                    Descarca
+                {d.url && d.url !== "#" ? (
+                  <a href={d.url} target="_blank" rel="noreferrer">
+                    <Button type="button" variant="outline" size="sm">
+                      Descarca
+                    </Button>
                   </a>
-                </Button>
+                ) : (
+                  <Button type="button" variant="outline" size="sm" disabled>
+                    Indisponibil
+                  </Button>
+                )}
               </div>
             </CardHeader>
-            <CardContent className="pt-0" />
           </Card>
         ))}
-        {!loading && docs.length === 0 && (
+        {!loading && !error && docs.length === 0 && (
           <p className="text-muted-foreground text-sm">Niciun document.</p>
         )}
       </div>
