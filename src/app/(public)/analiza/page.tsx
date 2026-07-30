@@ -47,7 +47,6 @@ type P = {
   nume: string;
   status: string;
   localitate: string;
-  valoare: string;
   progres: number;
   categorie?: string | null;
   bugetAlocatMil?: number | null;
@@ -70,83 +69,10 @@ export default function AnalizaPage() {
     const overruns = proiecte.filter((p) => (p.depasireBugetMil ?? 0) > 0);
 
     const alocat = proiecte.reduce((s, p) => s + (p.bugetAlocatMil ?? 0), 0);
-    const cheltuit = proiecte.reduce
-cd ~/portal-transparenta
-
-cat > "src/app/(public)/analiza/page.tsx" << 'ENDFILE'
-"use client";
-
-import { useMemo } from "react";
-import Link from "next/link";
-import { useProiecte } from "@/hooks/use-proiecte";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  ScatterChart,
-  Scatter,
-  ZAxis,
-  CartesianGrid,
-  Legend,
-} from "recharts";
-
-const COLORS = ["#2563eb", "#f59e0b", "#16a34a", "#dc2626", "#64748b"];
-
-function median(nums: number[]) {
-  if (!nums.length) return 0;
-  const a = [...nums].sort((x, y) => x - y);
-  const m = Math.floor(a.length / 2);
-  return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
-}
-
-function mean(nums: number[]) {
-  if (!nums.length) return 0;
-  return nums.reduce((s, n) => s + n, 0) / nums.length;
-}
-
-type P = {
-  id: string;
-  nume: string;
-  status: string;
-  localitate: string;
-  valoare: string;
-  progres: number;
-  categorie?: string | null;
-  bugetAlocatMil?: number | null;
-  bugetCheltuitMil?: number | null;
-  depasireBugetMil?: number | null;
-  zileIntarziere?: number | null;
-  progresFizic?: number | null;
-  progresFinanciar?: number | null;
-  risc?: string | null;
-};
-
-export default function AnalizaPage() {
-  const { data, isLoading, isError } = useProiecte("all", "all");
-  const proiecte = (data || []) as P[];
-
-  const stats = useMemo(() => {
-    const total = proiecte.length;
-    const delays = proiecte.map((p) => p.zileIntarziere ?? 0);
-    const withDelay = proiecte.filter((p) => (p.zileIntarziere ?? 0) > 0);
-    const overruns = proiecte.filter((p) => (p.depasireBugetMil ?? 0) > 0);
-
-    const alocat = proiecte.reduce((s, p) => s + (p.bugetAlocatMil ?? 0), 0);
-    const cheltuit = proiecte.reduce((s, p) => s + (p.bugetCheltuitMil ?? 0), 0);
+    const cheltuit = proiecte.reduce(
+      (s, p) => s + (p.bugetCheltuitMil ?? 0),
+      0
+    );
     const overrunSum = proiecte.reduce(
       (s, p) => s + Math.max(0, p.depasireBugetMil ?? 0),
       0
@@ -160,24 +86,17 @@ export default function AnalizaPage() {
 
     const byStatus: Record<string, number> = {};
     const byCat: Record<string, number> = {};
-    const byLoc: Record<string, number> = {};
-    const byRisc: Record<string, number> = {};
 
     for (const p of proiecte) {
       byStatus[p.status] = (byStatus[p.status] || 0) + 1;
       const cat = p.categorie || "Altele";
       byCat[cat] = (byCat[cat] || 0) + (p.bugetAlocatMil ?? 0);
-      byLoc[p.localitate] = (byLoc[p.localitate] || 0) + (p.bugetAlocatMil ?? 0);
-      const r = p.risc || "nespecificat";
-      byRisc[r] = (byRisc[r] || 0) + 1;
     }
 
     const scatter = proiecte.map((p) => ({
-      name: p.localitate,
       x: p.progres ?? 0,
       y: p.bugetCheltuitMil ?? 0,
       z: Math.max(1, p.zileIntarziere ?? 1),
-      nume: p.nume,
     }));
 
     const delayBars = proiecte.map((p) => ({
@@ -198,7 +117,7 @@ export default function AnalizaPage() {
       maxDelay: delays.length ? Math.max(...delays) : 0,
       nDelayed: withDelay.length,
       nOverrun: overruns.length,
-      absorbție: alocat ? (cheltuit / alocat) * 100 : 0,
+      absorbtie: alocat ? (cheltuit / alocat) * 100 : 0,
       statusData: Object.entries(byStatus).map(([name, value]) => ({
         name,
         value,
@@ -206,14 +125,6 @@ export default function AnalizaPage() {
       catData: Object.entries(byCat).map(([name, value]) => ({
         name,
         value: Number(value.toFixed(2)),
-      })),
-      locData: Object.entries(byLoc).map(([name, value]) => ({
-        name,
-        value: Number(value.toFixed(2)),
-      })),
-      riscData: Object.entries(byRisc).map(([name, value]) => ({
-        name,
-        value,
       })),
       scatter,
       delayBars,
@@ -257,8 +168,7 @@ export default function AnalizaPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Analiza</h1>
           <p className="text-muted-foreground mt-2 max-w-2xl">
-            Indicatori de performanta, intarzieri, depasiri de buget si distributii
-            — orientati spre monitorizare publica si analiza de specialitate.
+            Indicatori de performanta, intarzieri, depasiri de buget si distributii.
           </p>
         </div>
         <Button type="button" variant="outline" onClick={exportCsv}>
@@ -275,9 +185,9 @@ export default function AnalizaPage() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Absorbție (cheltuit / alocat)</CardDescription>
+            <CardDescription>Absorbtie (cheltuit / alocat)</CardDescription>
             <CardTitle className="text-3xl">
-              {stats.absorbție.toFixed(0)}%
+              {stats.absorbtie.toFixed(0)}%
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
@@ -292,20 +202,19 @@ export default function AnalizaPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
-            n={stats.nDelayed} · medie {stats.meanDelay.toFixed(0)} zile ·
-            mediană {stats.medianDelay.toFixed(0)} · max {stats.maxDelay}
+            n={stats.nDelayed} · medie {stats.meanDelay.toFixed(0)} · mediana{" "}
+            {stats.medianDelay.toFixed(0)} · max {stats.maxDelay}
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Depasire buget (suma)</CardDescription>
+            <CardDescription>Depasire buget (suma mil.)</CardDescription>
             <CardTitle className="text-3xl">
               {stats.overrunSum.toFixed(1)}
             </CardTitle>
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground">
-            mil. RON · {stats.pctOverrun.toFixed(1)}% din alocat · n=
-            {stats.nOverrun}
+            {stats.pctOverrun.toFixed(1)}% din alocat · n={stats.nOverrun}
           </CardContent>
         </Card>
       </div>
@@ -313,7 +222,7 @@ export default function AnalizaPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Intarzieri si depasiri pe localitate</CardTitle>
+            <CardTitle className="text-base">Intarzieri si depasiri</CardTitle>
           </CardHeader>
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -332,18 +241,19 @@ export default function AnalizaPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">
-              Progres vs. buget cheltuit (marime ~ intarziere)
-            </CardTitle>
-            <CardDescription>
-              Scatter: X=progres %, Y=cheltuit mil., dimensiune ~ zile intarziere
-            </CardDescription>
+            <CardTitle className="text-base">Progres vs. buget cheltuit</CardTitle>
           </CardHeader>
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" dataKey="x" name="Progres" unit="%" domain={[0, 100]} />
+                <XAxis
+                  type="number"
+                  dataKey="x"
+                  name="Progres"
+                  unit="%"
+                  domain={[0, 100]}
+                />
                 <YAxis type="number" dataKey="y" name="Cheltuit" unit=" mil" />
                 <ZAxis type="number" dataKey="z" range={[60, 400]} />
                 <Tooltip cursor={{ strokeDasharray: "3 3" }} />
@@ -381,14 +291,19 @@ export default function AnalizaPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Buget alocat pe categorie</CardTitle>
+            <CardTitle className="text-base">Buget pe categorie</CardTitle>
           </CardHeader>
           <CardContent className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.catData} layout="vertical" margin={{ left: 20 }}>
+              <BarChart data={stats.catData} layout="vertical" margin={{ left: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" />
-                <YAxis type="category" dataKey="name" width={110} tick={{ fontSize: 10 }} />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  width={100}
+                  tick={{ fontSize: 10 }}
+                />
                 <Tooltip />
                 <Bar dataKey="value" name="mil. RON" fill="#2563eb" />
               </BarChart>
@@ -400,28 +315,20 @@ export default function AnalizaPage() {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Gap financiar − fizic (p.p.)</CardTitle>
-            <CardDescription>
-              Pozitiv: absorbție înaintea șantierului · Negativ: execuție înaintea plăților
-            </CardDescription>
+            <CardTitle className="text-base">Gap financiar - fizic (p.p.)</CardTitle>
           </CardHeader>
           <CardContent className="text-sm space-y-2">
             {stats.gaps.map((g) => (
-              <div key={g.id} className="flex justify-between gap-2 border-b py-2">
+              <div
+                key={g.id}
+                className="flex justify-between gap-2 border-b py-2"
+              >
                 <Link href={`/proiecte/${g.id}`} className="hover:underline">
                   {g.nume}
                 </Link>
-                <span
-                  className={
-                    g.gap > 5
-                      ? "text-amber-600"
-                      : g.gap < -5
-                        ? "text-blue-600"
-                        : "text-muted-foreground"
-                  }
-                >
+                <span>
                   {g.gap > 0 ? "+" : ""}
-                  {g.gap} p.p. (F{g.fin}/P{g.fiz})
+                  {g.gap} (F{g.fin}/P{g.fiz})
                 </span>
               </div>
             ))}
@@ -434,33 +341,19 @@ export default function AnalizaPage() {
           </CardHeader>
           <CardContent className="text-sm space-y-2">
             {stats.topDelayed.map((p) => (
-              <div key={p.id} className="flex justify-between gap-2 border-b py-2">
+              <div
+                key={p.id}
+                className="flex justify-between gap-2 border-b py-2"
+              >
                 <Link href={`/proiecte/${p.id}`} className="hover:underline">
                   {p.nume}
                 </Link>
-                <span className="text-amber-700 font-medium">
-                  {p.zileIntarziere ?? 0} zile
-                </span>
+                <span>{p.zileIntarziere ?? 0} zile</span>
               </div>
             ))}
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Note metodologice</CardTitle>
-        </CardHeader>
-        <CardContent className="text-xs text-muted-foreground space-y-1">
-          <p>
-            Media și mediana intarzierilor: mediana e mai robusta la valori extreme.
-          </p>
-          <p>
-            Datele curente sunt din baza portalului (seed/demo pana la import oficial).
-            Exportul CSV permite replicarea in R / Python / Excel.
-          </p>
-        </CardContent>
-      </Card>
     </div>
   );
 }
