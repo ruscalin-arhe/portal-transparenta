@@ -41,7 +41,6 @@ function HartaInner() {
   const [proiecte, setProiecte] = useState([] as ProiectMap[]);
   const [err, setErr] = useState(null as string | null);
   const [filters, setFilters] = useState(defaultMapFilters);
-  const [geoJsonUrl, setGeoJsonUrl] = useState("");
 
   useEffect(() => {
     fetch("/api/proiecte", { cache: "no-store" })
@@ -70,8 +69,7 @@ function HartaInner() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Harta</h1>
         <p className="text-muted-foreground mt-2">
-          Filtrare avansata pe risc, status, intarzieri si depasiri. Strat optional
-          GeoJSON extern.
+          Filtrare avansata pe risc, status, intarzieri si depasiri.
         </p>
       </div>
 
@@ -82,34 +80,7 @@ function HartaInner() {
         resultCount={filtered.length}
       />
 
-      <div className="rounded-lg border p-3 space-y-2 text-sm">
-        <p className="font-medium">Strat geospatial extern (GeoJSON)</p>
-        <p className="text-xs text-muted-foreground">
-          URL public .geojson / .json (ex. limite administrative, coridoare).
-          Datele raman la sursa — portalul doar le afiseaza.
-        </p>
-        <div className="flex flex-wrap gap-2">
-          <input
-            className="flex-1 min-w-[200px] h-9 rounded-md border bg-background px-3 text-sm"
-            placeholder="https://.../fisier.geojson"
-            value={geoJsonUrl}
-            onChange={(e) => setGeoJsonUrl(e.target.value)}
-          />
-          <button
-            type="button"
-            className="h-9 rounded-md border px-3 text-sm hover:bg-muted"
-            onClick={() => setGeoJsonUrl("")}
-          >
-            Sterge strat
-          </button>
-        </div>
-      </div>
-
-      <LeafletMap
-        proiecte={filtered}
-        focusId={focus}
-        externalGeoJsonUrl={geoJsonUrl || undefined}
-      />
+      <LeafletMap proiecte={filtered} focusId={focus} />
       <RiscLegend />
     </div>
   );
