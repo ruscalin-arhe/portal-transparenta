@@ -11,102 +11,200 @@ const proiecte = [
     valoareText: "12.4 mil. RON",
     valoareMil: 12.4,
     progres: 67,
-    descriere:
-      "Modernizare rețea medie tensiune: cabluri și posturi de transformare.",
+    descriere: "Modernizare rețea medie tensiune: cabluri și posturi de transformare.",
     dataStart: "15.03.2025",
-    dataEstimata: "30.11
-cat > src/app/api/proiecte/route.ts << 'ENDFILE'
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+    dataEstimata: "30.11.2026",
+    beneficiar: "Operator de distribuție energie",
+    categorie: "Infrastructură energetică",
+    lat: 46.7712,
+    lng: 23.6236,
+    bugetAlocatMil: 12.4,
+    bugetCheltuitMil: 9.1,
+    depasireBugetMil: 0,
+    zileIntarziere: 45,
+    progresFizic: 67,
+    progresFinanciar: 73,
+    risc: "mediu",
+    sursaFinantare: "Fonduri europene + buget operator",
+    contractor: "Constructor regional A",
+    ultimaActualizare: "15.07.2026",
+  },
+  {
+    slug: "infrastructura-digitala-est",
+    nume: "Infrastructură digitală – Regiunea Est",
+    status: "Planificat",
+    localitate: "Iași",
+    valoareText: "8.1 mil. RON",
+    valoareMil: 8.1,
+    progres: 15,
+    descriere: "Infrastructură de comunicații pentru servicii digitale publice.",
+    dataStart: "01.09.2026",
+    dataEstimata: "31.12.2027",
+    beneficiar: "Autoritate publică pentru digitalizare",
+    categorie: "Digitalizare",
+    lat: 47.1585,
+    lng: 27.6014,
+    bugetAlocatMil: 8.1,
+    bugetCheltuitMil: 0.9,
+    depasireBugetMil: 0,
+    zileIntarziere: 0,
+    progresFizic: 10,
+    progresFinanciar: 11,
+    risc: "scazut",
+    sursaFinantare: "Program digitalizare publică",
+    contractor: null,
+    ultimaActualizare: "01.07.2026",
+  },
+  {
+    slug: "reabilitare-dj152",
+    nume: "Reabilitare drum județean DJ152",
+    status: "Finalizat",
+    localitate: "Târgu Mureș",
+    valoareText: "5.7 mil. RON",
+    valoareMil: 5.7,
+    progres: 100,
+    descriere: "Reabilitare ~18 km drum județean, semnalizare și siguranță.",
+    dataStart: "10.04.2024",
+    dataEstimata: "20.12.2025",
+    beneficiar: "Consiliul Județean",
+    categorie: "Transport",
+    lat: 46.5427,
+    lng: 24.5575,
+    bugetAlocatMil: 5.7,
+    bugetCheltuitMil: 6.2,
+    depasireBugetMil: 0.5,
+    zileIntarziere: 20,
+    progresFizic: 100,
+    progresFinanciar: 100,
+    risc: "scazut",
+    sursaFinantare: "Buget județean + fonduri naționale",
+    contractor: "Constructor drumuri B",
+    ultimaActualizare: "20.12.2025",
+  },
+  {
+    slug: "spital-regional-sud",
+    nume: "Extindere spital regional – Corp urgențe",
+    status: "În derulare",
+    localitate: "Craiova",
+    valoareText: "48.0 mil. RON",
+    valoareMil: 48,
+    progres: 38,
+    descriere:
+      "Construire corp ATI și modernizare fluxuri de urgență. Proiect cu termen strâns și riscuri de aprovizionare.",
+    dataStart: "10.01.2025",
+    dataEstimata: "30.06.2027",
+    beneficiar: "Direcția de Sănătate Publică județeană",
+    categorie: "Sănătate",
+    lat: 44.3302,
+    lng: 23.7949,
+    bugetAlocatMil: 48,
+    bugetCheltuitMil: 22.5,
+    depasireBugetMil: 0,
+    zileIntarziere: 120,
+    progresFizic: 35,
+    progresFinanciar: 47,
+    risc: "ridicat",
+    sursaFinantare: "Fonduri europene + buget de stat",
+    contractor: "Consortiu medical-construcții",
+    ultimaActualizare: "20.07.2026",
+  },
+  {
+    slug: "retea-apa-vest",
+    nume: "Modernizare rețea apă potabilă – Zona Vest",
+    status: "În derulare",
+    localitate: "Timișoara",
+    valoareText: "19.2 mil. RON",
+    valoareMil: 19.2,
+    progres: 52,
+    descriere:
+      "Înlocuire conducte magistrale și stații de pompare. Întârzieri moderate pe autorizații.",
+    dataStart: "01.06.2025",
+    dataEstimata: "31.03.2027",
+    beneficiar: "Operator regional apă-canal",
+    categorie: "Utilități",
+    lat: 45.7489,
+    lng: 21.2087,
+    bugetAlocatMil: 19.2,
+    bugetCheltuitMil: 11.0,
+    depasireBugetMil: 0.8,
+    zileIntarziere: 60,
+    progresFizic: 50,
+    progresFinanciar: 57,
+    risc: "mediu",
+    sursaFinantare: "Fonduri de coeziune + buget local",
+    contractor: "Constructor utilități C",
+    ultimaActualizare: "10.07.2026",
+  },
+  {
+    slug: "campus-scoliar-centru",
+    nume: "Campus școlar integrat – Zona Centru",
+    status: "Planificat",
+    localitate: "Brașov",
+    valoareText: "14.5 mil. RON",
+    valoareMil: 14.5,
+    progres: 5,
+    descriere:
+      "Campus nou: săli, laborator și sală sport. În faza de proiect tehnic.",
+    dataStart: "01.03.2027",
+    dataEstimata: "30.09.2028",
+    beneficiar: "Consiliul Local",
+    categorie: "Educație",
+    lat: 45.6579,
+    lng: 25.6012,
+    bugetAlocatMil: 14.5,
+    bugetCheltuitMil: 0.4,
+    depasireBugetMil: 0,
+    zileIntarziere: 0,
+    progresFizic: 5,
+    progresFinanciar: 3,
+    risc: "scazut",
+    sursaFinantare: "PNRR educație (demo) + buget local",
+    contractor: null,
+    ultimaActualizare: "01.06.2026",
+  },
+  {
+    slug: "pod-rutier-est",
+    nume: "Pod rutier peste râu – ocolire Est",
+    status: "În derulare",
+    localitate: "Galați",
+    valoareText: "62.0 mil. RON",
+    valoareMil: 62,
+    progres: 28,
+    descriere:
+      "Pod și drum de legătură. Depășiri de cost estimate și întârzieri majore pe exproprieri.",
+    dataStart: "15.09.2024",
+    dataEstimata: "31.12.2026",
+    beneficiar: "Compania națională de drumuri (demo)",
+    categorie: "Transport",
+    lat: 45.4353,
+    lng: 28.0080,
+    bugetAlocatMil: 62,
+    bugetCheltuitMil: 31.5,
+    depasireBugetMil: 4.2,
+    zileIntarziere: 210,
+    progresFizic: 25,
+    progresFinanciar: 51,
+    risc: "ridicat",
+    sursaFinantare: "Fonduri europene + buget de stat",
+    contractor: "Consortiu infrastructură D",
+    ultimaActualizare: "25.07.2026",
+  },
+];
 
-export const dynamic = "force-dynamic";
-
-function norm(s: string) {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .trim();
-}
-
-function mapProiect(p: {
-  slug: string;
-  nume: string;
-  status: string;
-  localitate: string;
-  valoareText: string;
-  progres: number;
-  descriere: string;
-  dataStart: string | null;
-  dataEstimata: string | null;
-  beneficiar: string | null;
-  categorie: string | null;
-  lat: number | null;
-  lng: number | null;
-  bugetAlocatMil: number | null;
-  bugetCheltuitMil: number | null;
-  depasireBugetMil: number | null;
-  zileIntarziere: number;
-  progresFizic: number | null;
-  progresFinanciar: number | null;
-  risc: string | null;
-  sursaFinantare: string | null;
-  contractor: string | null;
-  ultimaActualizare: string | null;
-}) {
-  return {
-    id: p.slug,
-    nume: p.nume,
-    status: p.status,
-    localitate: p.localitate,
-    valoare: p.valoareText,
-    progres: p.progres,
-    descriere: p.descriere,
-    dataStart: p.dataStart,
-    dataEstimata: p.dataEstimata,
-    beneficiar: p.beneficiar,
-    categorie: p.categorie,
-    lat: p.lat,
-    lng: p.lng,
-    bugetAlocatMil: p.bugetAlocatMil,
-    bugetCheltuitMil: p.bugetCheltuitMil,
-    depasireBugetMil: p.depasireBugetMil,
-    zileIntarziere: p.zileIntarziere,
-    progresFizic: p.progresFizic,
-    progresFinanciar: p.progresFinanciar,
-    risc: p.risc,
-    sursaFinantare: p.sursaFinantare,
-    contractor: p.contractor,
-    ultimaActualizare: p.ultimaActualizare,
-  };
-}
-
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const status = searchParams.get("status");
-    const localitate = searchParams.get("localitate");
-
-    const all = await prisma.proiect.findMany({
-      where: { published: true },
-      orderBy: { nume: "asc" },
+async function main() {
+  for (const p of proiecte) {
+    await prisma.proiect.upsert({
+      where: { slug: p.slug },
+      update: p,
+      create: p,
     });
-
-    let data = all;
-    if (status && status !== "all") {
-      const n = norm(status);
-      data = data.filter((p) => norm(p.status) === n);
-    }
-    if (localitate && localitate !== "all") {
-      const n = norm(localitate);
-      data = data.filter((p) => norm(p.localitate).includes(n));
-    }
-
-    return NextResponse.json(data.map(mapProiect), {
-      headers: { "Cache-Control": "no-store" },
-    });
-  } catch (e) {
-    console.error(e);
-    return NextResponse.json({ error: "Eroare server" }, { status: 500 });
   }
+  console.log("Seed OK:", proiecte.length, "proiecte");
 }
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(() => prisma.$disconnect());
