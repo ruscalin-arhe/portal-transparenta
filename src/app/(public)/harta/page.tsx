@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
+import { RiscLegend } from "@/components/harta/risc-legend";
 import type { ProiectMap } from "@/components/harta/leaflet-map";
 
 const LeafletMap = dynamic(() => import("@/components/harta/leaflet-map"), {
@@ -37,7 +38,8 @@ function HartaInner() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Harta</h1>
         <p className="text-muted-foreground mt-2">
-          Localizare geospatiala a proiectelor. Culorile reflecta nivelul de risc.
+          Localizare geospatiala a proiectelor. Culorile reflecta nivelul de risc
+          conform scarii administrative (semafor).
           {focus ? (
             <span className="block text-sm mt-1">
               Focus: <code className="text-foreground">{focus}</code>
@@ -46,10 +48,7 @@ function HartaInner() {
         </p>
       </div>
       <LeafletMap proiecte={proiecte} focusId={focus} />
-      <p className="text-xs text-muted-foreground">
-        Verde = risc scazut · Portocaliu = mediu · Rosu = ridicat. Din detaliu proiect
-        foloseste „Vezi pe harta” pentru centrare automata pe pin.
-      </p>
+      <RiscLegend />
     </div>
   );
 }
