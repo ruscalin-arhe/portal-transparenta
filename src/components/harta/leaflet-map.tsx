@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, memo } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -13,6 +13,7 @@ import {
 import L from "leaflet";
 import Link from "next/link";
 import "leaflet/dist/leaflet.css";
+import { riscColor } from "@/lib/risc-colors";
 
 export type ProiectMap = {
   id: string;
@@ -27,7 +28,7 @@ export type ProiectMap = {
   risc?: string | null;
 };
 
-const iconDefault = L.icon({
+const markerIcon = L.icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconRetinaUrl:
     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
@@ -37,20 +38,21 @@ const iconDefault = L.icon({
   popupAnchor: [1, -34],
 });
 
+type Point = ProiectMap & { lat: number; lng: number };
+
 function MapController({
   points,
   focusId,
 }: {
-  points: (ProiectMap & { lat: number; lng: number })[];
+  points: Point[];
   focusId?: string | null;
 }) {
   const map = useMap();
 
   useEffect(() => {
-    map.invalidateSize();
-    const t = window.setTimeout(() => map.invalidateSize(), 200);
-    return () => window.clearTimeout(t);
-  }, [map, points.length, focusId]);
+    const id = window.requestAnimationFrame(() => map.invalidateSize());
+    return () => window.cancelAnimationFrame(id);
+  }, [map]);
 
   useEffect(() => {
     if (!points.length) return;
@@ -58,30 +60,72 @@ function MapController({
     if (focusId) {
       const p = points.find((x) => x.id === focusId);
       if (p) {
-        map.flyTo([p.lat, p.lng], 13, { duration: 0.8 });
+        map.flyTo([p.lat, p.lng], 15, { duration: 0.7 });
         return;
       }
     }
 
     if (points.length === 1) {
-      map.setView([points[0].lat, points[0].lng], 11);
+      map.setView([points[0].lat, points[0].lng], 15);
       return;
     }
 
-    const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng] as [number, number]));
-    map.fitBounds(bounds, { padding: [48, 48], maxZoom: 12 });
+    const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng]));
+    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
   }, [map, points, focusId]);
 
   return null;
 }
 
-function riscColor(risc?: string | null) {
-  const r = (risc || "").toLowerCase();
-  if (r.includes("ridicat")) return "#dc2626";
-  if (r.includes("mediu")) return "#f59e0b";
-  if (r.includes("scazut") || r.includes("scăzut")) return "#16a34a";
-  return "#2563eb";
-}
+const ProjectMarker = memo(function ProjectMarker({
+  p,
+  focused,
+}: {
+  p: Point;
+  focused: boolean;
+}) {
+  const color = riscColor(p.risc);
+
+  return (
+    <>
+      <CircleMarker
+        center={[p.lat, p.lng]}
+        radius={focused ? 16 : 10}
+        pathOptions={{
+          color: focused ? "#ffffff" : color,
+          fillColor: color,
+          fillOpacity: focused ? 0.95 : 0.75,
+          weight: focused ? 3 : 2,
+        }}
+      />
+      <Marker position={[p.lat, p.lng]} icon={markerIcon}>
+        <Popup>
+          <div style={{ minWidth: 180 }}>
+            <strong>{p.nume}</strong>
+            <br />
+            {p.localitate} · {p.status}
+            <br />
+            Progres: {p.progres}%
+            {p.risc ? (
+              <>
+                <br />
+                Risc: {p.risc}
+              </>
+            ) : null}
+            {p.zileIntarziere != null && p.zileIntarziere > 0 ? (
+              <>
+                <br />
+                Intarziere: {p.zileIntarziere} zile
+              </>
+            ) : null}
+            <br />
+            <Link href={`/proiecte/${p.id}`}>Detalii proiect</Link>
+          </div>
+        </Popup>
+      </Marker>
+    </>
+  );
+});
 
 export default function LeafletMap({
   proiecte,
@@ -90,100 +134,65 @@ export default function LeafletMap({
   proiecte: ProiectMap[];
   focusId?: string | null;
 }) {
-  const points = useMemo(
-    () =>
-      proiecte.filter(
-        (p): p is ProiectMap & { lat: number; lng: number } =>
-          typeof p.lat === "number" &&
-          typeof p.lng === "number" &&
-          !Number.isNaN(p.lat) &&
-          !Number.isNaN(p.lng)
-      ),
-    [proiecte]
-  );
+  const points = useMemo(() => {
+    const out: Point[] = [];
+    for (const p of proiecte) {
+      if (
+        typeof p.lat === "number" &&
+        typeof p.lng === "number" &&
+        !Number.isNaN(p.lat) &&
+        !Number.isNaN(p.lng)
+      ) {
+        out.push(p as Point);
+      }
+    }
+    return out;
+  }, [proiecte]);
 
-  const center: [number, number] = points.length
-    ? [points[0].lat, points[0].lng]
-    : [45.94, 24.96];
+  const center = useMemo((): [number, number] => {
+    if (!points.length) return [45.94, 24.96];
+    if (focusId) {
+      const f = points.find((p) => p.id === focusId);
+      if (f) return [f.lat, f.lng];
+    }
+    return [points[0].lat, points[0].lng];
+  }, [points, focusId]);
 
   return (
     <div className="h-[min(70vh,560px)] w-full rounded-lg overflow-hidden border relative z-0">
       <MapContainer
         center={center}
-        zoom={6}
+        zoom={15}
         scrollWheelZoom
+        preferCanvas
         style={{ height: "100%", width: "100%" }}
         className="z-0"
       >
         <LayersControl position="topright">
-          <LayersControl.BaseLayer checked name="OpenStreetMap">
+          <LayersControl.BaseLayer checked name="Satelit">
             <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="Esri World Imagery"
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              maxZoom={19}
+              updateWhenZooming={false}
+              keepBuffer={2}
             />
           </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Satelit">
+          <LayersControl.BaseLayer name="OpenStreetMap">
             <TileLayer
-              attribution="Esri"
-              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              attribution='&copy; OpenStreetMap'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              updateWhenZooming={false}
+              keepBuffer={2}
             />
           </LayersControl.BaseLayer>
         </LayersControl>
 
         <MapController points={points} focusId={focusId} />
 
-        {points.map((p) => {
-          const focused = focusId === p.id;
-          return (
-            <span key={p.id}>
-              <CircleMarker
-                center={[p.lat, p.lng]}
-                radius={focused ? 14 : 8}
-                pathOptions={{
-                  color: focused ? "#0f172a" : riscColor(p.risc),
-                  fillColor: riscColor(p.risc),
-                  fillOpacity: focused ? 0.9 : 0.65,
-                  weight: focused ? 3 : 2,
-                }}
-              />
-              <Marker position={[p.lat, p.lng]} icon={iconDefault}>
-                <Popup>
-                  <div style={{ minWidth: 180 }}>
-                    <strong>{p.nume}</strong>
-                    <br />
-                    {p.localitate} · {p.status}
-                    <br />
-                    Progres: {p.progres}%
-                    {p.zileIntarziere != null && p.zileIntarziere > 0 && (
-                      <>
-                        <br />
-                        <span style={{ color: "#b45309" }}>
-                          Intarziere: {p.zileIntarziere} zile
-                        </span>
-                      </>
-                    )}
-                    {p.depasireBugetMil != null && p.depasireBugetMil > 0 && (
-                      <>
-                        <br />
-                        <span style={{ color: "#b91c1c" }}>
-                          Depasire buget: +{p.depasireBugetMil} mil. RON
-                        </span>
-                      </>
-                    )}
-                    {p.risc && (
-                      <>
-                        <br />
-                        Risc: {p.risc}
-                      </>
-                    )}
-                    <br />
-                    <Link href={`/proiecte/${p.id}`}>Detalii proiect</Link>
-                  </div>
-                </Popup>
-              </Marker>
-            </span>
-          );
-        })}
+        {points.map((p) => (
+          <ProjectMarker key={p.id} p={p} focused={focusId === p.id} />
+        ))}
       </MapContainer>
     </div>
   );
