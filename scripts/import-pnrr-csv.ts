@@ -1,9 +1,3 @@
-/**
- * Import CSV PNRR (coloane flexibile).
- * Usage: pnpm exec tsx scripts/import-pnrr-csv.ts data/pnrr-plati.csv "https://data.gov.ro/..."
- *
- * Ajusteaza maparea headerelor dupa fisierul real.
- */
 import { readFileSync } from "fs";
 import { PrismaClient } from "@prisma/client";
 
@@ -12,18 +6,22 @@ const file = process.argv[2];
 const sourceUrl = process.argv[3] || "local-csv";
 
 if (!file) {
-  console.error("Usage: tsx scripts/import-pnrr-csv.ts <file.csv> [sourceUrl]");
+  console.error(
+    'Usage: pnpm exec tsx scripts/import-pnrr-csv.ts <file.csv> [sourceUrl]'
+  );
   process.exit(1);
 }
 
 function parseCsv(text: string) {
   const lines = text.trim().split(/\r?\n/);
-  const headers = lines[0].split(/[;,]/).map((h) => h.trim().toLowerCase());
-  return lines.slice(1).map((line) => {
-    const cols = line.split(/[;,]/);
+  if (lines.length < 2) return [];
+  const sep = lines[0].includes(";") ? ";" : ",";
+  const headers = lines[0].split(sep).map((h) => h.trim().toLowerCase());
+  return lines.slice(1).filter(Boolean).map((line) => {
+    const cols = line.split(sep);
     const row: Record<string, string> = {};
     headers.forEach((h, i) => {
-      row[h] = (cols[i] || "").trim();
+      row[h] = (cols[i] || "").trim().replace(/^"|"$/g, "");
     });
     return row;
   });
@@ -45,13 +43,15 @@ async function main() {
   for (const row of rows) {
     const sumaRaw = pick(row, ["suma", "valoare", "plata", "amount"]);
     const suma = sumaRaw
-      ? parseFloat(sumaRaw.replace(/\s/g, "").replace(",", "."))
+      ? parseFloat(
+          sumaRaw.replace(/\s/g, "").replace(/\./g, "").replace(",", ".")
+        )
       : null;
 
     await prisma.pnrrPlata.create({
       data: {
         componenta: pick(row, ["component", "comp"]),
-        investitie: pick(row, ["invest", "masura", "titlu", "proiect"]),
+        investitie: pick(row, ["invest", "masura", "titlu", "proiect", "denumire"]),
         beneficiar: pick(row, ["beneficiar", "primarie", "uats", "solicitant"]),
         suma: Number.isFinite(suma as number) ? (suma as number) : null,
         moneda: pick(row, ["moneda", "currency"]) || "RON",
@@ -64,6 +64,7 @@ async function main() {
     });
     n++;
   }
+
   console.log("Import PnrrPlata:", n, "randuri din", file);
 }
 

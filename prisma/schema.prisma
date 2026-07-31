@@ -70,19 +70,19 @@ model Document {
 }
 
 model PnrrPlata {
-  id            String   @id @default(cuid())
-  componenta    String?
-  investitie    String?
-  beneficiar    String?
-  suma          Float?
-  moneda        String?  @default("RON")
-  dataPlata     String?
-  judet         String?
-  rawJson       String?
-  sourceUrl     String
-  sourceFile    String?
-  retrievedAt   DateTime @default(now())
-  createdAt     DateTime @default(now())
+  id          String   @id @default(cuid())
+  componenta  String?
+  investitie  String?
+  beneficiar  String?
+  suma        Float?
+  moneda      String?  @default("RON")
+  dataPlata   String?
+  judet       String?
+  rawJson     String?
+  sourceUrl   String
+  sourceFile  String?
+  retrievedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
 
   @@index([componenta])
   @@index([judet])
