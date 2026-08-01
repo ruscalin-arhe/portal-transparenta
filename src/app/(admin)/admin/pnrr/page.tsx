@@ -4,12 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Row = {
   id: string;
@@ -44,12 +39,17 @@ export default function AdminPnrrPage() {
         `/api/admin/pnrr?status=${encodeURIComponent(st)}`,
         { cache: "no-store" }
       );
+      const data = await res.json().catch(() => ({}));
       if (res.status === 401) {
         setError("Neautorizat — /login");
         return;
       }
-      if (!res.ok) throw new Error("Eroare incarcare");
-      const data = await res.json();
+      if (!res.ok) {
+        setError(
+          `HTTP ${res.status}: ${data.error || data.detail || "Eroare"}`
+        );
+        return;
+      }
       setLista(data.lista || []);
       setCounts(data.counts || []);
     } catch (e) {
@@ -63,7 +63,11 @@ export default function AdminPnrrPage() {
     load(status);
   }, [status]);
 
-  function updateLocal(id: string, field: keyof Row, value: string | number | null) {
+  function updateLocal(
+    id: string,
+    field: keyof Row,
+    value: string | number | null
+  ) {
     setLista((prev) =>
       prev.map((r) => (r.id === id ? { ...r, [field]: value } : r))
     );
@@ -97,8 +101,10 @@ export default function AdminPnrrPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Admin · Coada PNRR</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h1 className="text-2xl font-bold tracking-tight">
+          Admin · Coada PNRR
+        </h1>
+        <p className="text-muted-foreground mt-1 text-sm">
           Inregistrari cu date lipsa sau insuficiente — completare si validare
         </p>
       </div>
@@ -117,6 +123,7 @@ export default function AdminPnrrPage() {
             "MISSING_DATA",
             "INSUFFICIENT_DATA",
             "COMPLETE",
+            "VALIDATED",
             "all",
           ] as const
         ).map((s) => (
@@ -125,16 +132,21 @@ export default function AdminPnrrPage() {
             type="button"
             size="sm"
             variant={status === s ? "default" : "outline"}
-            onClick={() => setStatus(s)}
+            onClick={() => {
+              setMsg(null);
+              setStatus(s);
+            }}
           >
             {s}
           </Button>
         ))}
       </div>
 
-      {msg && <p className="text-sm text-muted-foreground">{msg}</p>}
+      {msg && <p className="text-muted-foreground text-sm">{msg}</p>}
       {error && <p className="text-destructive text-sm">{error}</p>}
-      {loading && <p className="text-muted-foreground text-sm">Se incarca...</p>}
+      {loading && (
+        <p className="text-muted-foreground text-sm">Se incarca...</p>
+      )}
 
       <div className="space-y-4">
         {lista.map((r) => (
@@ -143,9 +155,8 @@ export default function AdminPnrrPage() {
               <CardTitle className="text-base">
                 {r.investitie || r.componenta || "Fara titlu"}
               </CardTitle>
-              <p className="text-xs text-muted-foreground">
-                {r.dataStatus} · scor {r.completenessScore}%
-                {" · "}
+              <p className="text-muted-foreground text-xs">
+                {r.dataStatus} · scor {r.completenessScore}%{" · "}
                 <a
                   href={r.sourceUrl}
                   className="underline"
@@ -216,7 +227,7 @@ export default function AdminPnrrPage() {
                   }
                 />
               </div>
-              <div className="flex flex-wrap gap-2 items-end">
+              <div className="flex flex-wrap items-end gap-2">
                 <Button type="button" size="sm" onClick={() => save(r)}>
                   Revalideaza & salveaza
                 </Button>
@@ -233,7 +244,7 @@ export default function AdminPnrrPage() {
           </Card>
         ))}
         {!loading && lista.length === 0 && (
-          <p className="text-sm text-muted-foreground">Nicio inregistrare.</p>
+          <p className="text-muted-foreground text-sm">Nicio inregistrare.</p>
         )}
       </div>
     </div>

@@ -70,20 +70,48 @@ model Document {
 }
 
 model PnrrPlata {
-  id          String   @id @default(cuid())
-  componenta  String?
-  investitie  String?
-  beneficiar  String?
-  suma        Float?
-  moneda      String?  @default("RON")
-  dataPlata   String?
-  judet       String?
-  rawJson     String?
-  sourceUrl   String
-  sourceFile  String?
-  retrievedAt DateTime @default(now())
-  createdAt   DateTime @default(now())
+  id                String   @id @default(cuid())
+  componenta        String?
+  investitie        String?
+  beneficiar        String?
+  suma              Float?
+  moneda            String?  @default("RON")
+  dataPlata         String?
+  judet             String?
+  rawJson           String?
+  sourceUrl         String
+  sourceFile        String?
+  retrievedAt       DateTime @default(now())
+  createdAt         DateTime @default(now())
+
+  dataStatus        String   @default("MISSING_DATA")
+  completenessScore Int      @default(0)
+  validationReport  String?
+  published         Boolean  @default(false)
 
   @@index([componenta])
   @@index([judet])
+  @@index([dataStatus])
+  @@index([published])
 }
+
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  method    String   @default("GET")
+  status    Int?
+  ip        String?
+  country   String?
+  city      String?
+  referer   String?
+  userAgent String?
+  isAdmin   Boolean  @default(false)
+  userId    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path])
+  @@index([isAdmin])
+  @@index([country])
+}
+
