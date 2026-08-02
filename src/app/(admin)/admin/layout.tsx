@@ -33,6 +33,12 @@ export default async function AdminLayout({
               <Link href="/admin/trafic" className="hover:underline">
                 Trafic
               </Link>
+              <Link href="/admin/registry" className="hover:underline">
+                Registry
+              </Link>
+              <Link href="/docs" className="hover:underline">
+                Docs
+              </Link>
               <Link href="/" className="text-muted-foreground hover:underline">
                 Portal public
               </Link>

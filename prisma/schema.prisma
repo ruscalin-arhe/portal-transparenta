@@ -70,6 +70,8 @@ model Document {
 }
 
 model PnrrPlata {
+  dataRunId         String?
+  dataRun           DataRun?  @relation(fields: [dataRunId], references: [id], onDelete: SetNull)
   id                String   @id @default(cuid())
   componenta        String?
   investitie        String?
@@ -93,6 +95,7 @@ model PnrrPlata {
   @@index([judet])
   @@index([dataStatus])
   @@index([published])
+  @@index([dataRunId])
 }
 
 model PageView {
@@ -115,3 +118,59 @@ model PageView {
   @@index([country])
 }
 
+
+enum Channel {
+  PUBLIC
+  PRIVATE
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  shortName   String?
+  type        String?
+  website     String?
+  description String?
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  dataSources DataSource[]
+}
+
+model DataSource {
+  id             String       @id @default(cuid())
+  slug           String       @unique
+  name           String
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  type           String
+  sourceUrl      String?
+  channel        Channel      @default(PUBLIC)
+  frequency      String?
+  active         Boolean      @default(true)
+  lastRunAt      DateTime?
+  published      Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  runs           DataRun[]
+}
+
+model DataRun {
+  id           String     @id @default(cuid())
+  dataSourceId String
+  dataSource   DataSource @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
+  status       String
+  startedAt    DateTime
+  finishedAt   DateTime?
+  recordsTotal Int?
+  recordsOk    Int?
+  recordsError Int?
+  sourceFile   String?
+  sourceUrl    String?
+  errorLog     String?
+  metadata     Json?
+  createdAt    DateTime   @default(now())
+  pnrrPlati    PnrrPlata[]
+}
