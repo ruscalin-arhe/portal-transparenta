@@ -9,9 +9,10 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const judet = searchParams.get("judet");
 
-    const where = judet
-      ? { judet: { contains: judet, mode: "insensitive" as const } }
-      : {};
+    const where: Record<string, unknown> = { published: true };
+    if (judet) {
+      where.judet = { contains: judet, mode: "insensitive" as const };
+    }
 
     const total = await prisma.pnrrPlata.count({ where });
     const sumaAgg = await prisma.pnrrPlata.aggregate({

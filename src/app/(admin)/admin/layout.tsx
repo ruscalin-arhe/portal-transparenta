@@ -3,6 +3,8 @@ import Link from "next/link";
 import { auth, signOut } from "@/lib/auth/auth";
 import { Button } from "@/components/ui/button";
 
+export const dynamic = "force-dynamic";
+
 export default async function AdminLayout({
   children,
 }: {
@@ -14,16 +16,22 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <header className="border-b">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between max-w-6xl">
+        <div className="container mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-6">
             <Link href="/admin/sesizari" className="font-semibold">
               Admin · Transparenta
             </Link>
-            <nav className="text-sm flex gap-4">
+            <nav className="flex gap-4 text-sm">
               <Link href="/admin/sesizari" className="hover:underline">
                 Sesizari
+              </Link>
+              <Link href="/admin/pnrr" className="hover:underline">
+                PNRR
+              </Link>
+              <Link href="/admin/trafic" className="hover:underline">
+                Trafic
               </Link>
               <Link href="/" className="text-muted-foreground hover:underline">
                 Portal public
@@ -45,7 +53,7 @@ export default async function AdminLayout({
           </div>
         </div>
       </header>
-      <main className="container mx-auto px-4 py-8 max-w-6xl">{children}</main>
+      <main className="container mx-auto max-w-6xl px-4 py-8">{children}</main>
     </div>
   );
 }
