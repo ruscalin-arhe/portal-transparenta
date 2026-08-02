@@ -1,4 +1,3 @@
-import { PageViewTracker } from "@/components/analytics/page-view-tracker";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -33,7 +32,6 @@ export default function RootLayout({
         }
       >
         <Providers>{children}</Providers>
-        <PageViewTracker />
       </body>
     </html>
   );
