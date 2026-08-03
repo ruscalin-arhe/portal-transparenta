@@ -1,4 +1,6 @@
-import { createHash } from "crypto";
+from pathlib import Path
+
+Path("scripts/import-pnrr-csv.ts").write_text(r'''import { createHash } from "crypto";
 import { readFileSync, existsSync } from "fs";
 import { PrismaClient, Prisma } from "@prisma/client";
 import { validatePnrrPlata } from "../src/lib/data-quality/pnrr-validate";
@@ -167,7 +169,12 @@ async function main() {
           "proiect",
           "denumire",
         ]),
-        beneficiar: pick(row, ["beneficiar", "primarie", "uats", "solicitant"]),
+        beneficiar: pick(row, [
+          "beneficiar",
+          "primarie",
+          "uats",
+          "solicitant",
+        ]),
         suma,
         moneda: pick(row, ["moneda", "currency"]) || "RON",
         dataPlata: pick(row, ["data", "date", "luna"]),
@@ -261,3 +268,5 @@ main()
       /* ignore */
     }
   });
+''')
+print("wrote", Path("scripts/import-pnrr-csv.ts").stat().st_size)
