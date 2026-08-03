@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const user = process.env.SITE_ACCESS_USER;
   const pass = process.env.SITE_ACCESS_PASSWORD;
 
@@ -25,7 +25,8 @@ export function middleware(request: NextRequest) {
   return new NextResponse("Autentificare necesara", {
     status: 401,
     headers: {
-      "WWW-Authenticate": 'Basic realm="Portal Transparenta - acces restrictionat"',
+      "WWW-Authenticate":
+        'Basic realm="Portal Transparenta - acces restrictionat"',
       "Cache-Control": "no-store",
     },
   });
