@@ -70,6 +70,12 @@ export default function AdminTraficPage() {
         <Button size="sm" variant="outline" onClick={() => load(scope)}>
           Refresh
         </Button>
+        <a
+          className="hover:bg-muted inline-flex h-8 items-center rounded-md border px-3 text-sm"
+          href={`/api/admin/trafic/export?scope=${scope}`}
+        >
+          Export CSV
+        </a>
       </div>
 
       {error && <p className="text-destructive text-sm">{error}</p>}

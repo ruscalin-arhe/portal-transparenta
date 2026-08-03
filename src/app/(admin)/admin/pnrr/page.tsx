@@ -19,10 +19,20 @@ type Row = {
   completenessScore: number;
   validationReport: string | null;
   published: boolean;
+  dataRunId?: string | null;
 };
 
 export default function AdminPnrrPage() {
   const [status, setStatus] = useState("INSUFFICIENT_DATA");
+  const [dataRunId, setDataRunId] = useState("");
+  const [runs, setRuns] = useState(
+    [] as {
+      id: string;
+      status: string;
+      sourceFile: string | null;
+      createdAt: string;
+    }[]
+  );
   const [lista, setLista] = useState([] as Row[]);
   const [counts, setCounts] = useState(
     [] as { dataStatus: string; _count: number }[]
@@ -31,14 +41,13 @@ export default function AdminPnrrPage() {
   const [msg, setMsg] = useState(null as string | null);
   const [loading, setLoading] = useState(true);
 
-  async function load(st = status) {
+  async function load(st = status, runId = dataRunId) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/admin/pnrr?status=${encodeURIComponent(st)}`,
-        { cache: "no-store" }
-      );
+      const q = new URLSearchParams({ status: st });
+      if (runId) q.set("dataRunId", runId);
+      const res = await fetch(`/api/admin/pnrr?${q}`, { cache: "no-store" });
       const data = await res.json().catch(() => ({}));
       if (res.status === 401) {
         setError("Neautorizat — /login");
@@ -60,8 +69,20 @@ export default function AdminPnrrPage() {
   }
 
   useEffect(() => {
-    load(status);
-  }, [status]);
+    fetch("/api/admin/data-runs", {
+      cache: "no-store",
+      credentials: "same-origin",
+    })
+      .then((r) => r.json())
+      .then((d) => {
+        if (Array.isArray(d)) setRuns(d.slice(0, 30));
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    load(status, dataRunId);
+  }, [status, dataRunId]);
 
   function updateLocal(
     id: string,
@@ -115,6 +136,26 @@ export default function AdminPnrrPage() {
             {c.dataStatus}: {c._count}
           </span>
         ))}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="text-muted-foreground text-sm">DataRun:</label>
+        <select
+          className="border-input bg-background rounded-md border px-2 py-1 text-sm"
+          value={dataRunId}
+          onChange={(e) => {
+            setMsg(null);
+            setDataRunId(e.target.value);
+          }}
+        >
+          <option value="">toate</option>
+          {runs.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.status} · {(r.sourceFile || r.id).slice(-40)} ·{" "}
+              {new Date(r.createdAt).toLocaleString("ro-RO")}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="flex flex-wrap gap-2">

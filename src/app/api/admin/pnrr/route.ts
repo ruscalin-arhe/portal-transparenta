@@ -12,9 +12,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Neautorizat" }, { status: 401 });
     }
 
-    const status = new URL(request.url).searchParams.get("status");
+    const sp = new URL(request.url).searchParams;
+    const status = sp.get("status");
+    const dataRunId = sp.get("dataRunId");
 
     const lista = await prisma.pnrrPlata.findMany({
+      where: dataRunId ? { dataRunId } : undefined,
       orderBy: { createdAt: "desc" },
       take: 100,
     });

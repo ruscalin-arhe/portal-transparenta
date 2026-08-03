@@ -154,6 +154,42 @@ export default function AdminRegistryPage() {
     await load();
   }
 
+  async function toggleOrgPublished(o: Org) {
+    setMsg(null);
+    setError(null);
+    const res = await fetch("/api/admin/organizations/" + o.id, {
+      method: "PATCH",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ published: !o.published }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(data.error || "HTTP " + res.status);
+      return;
+    }
+    setMsg("Organization " + o.slug + " published=" + data.published);
+    await load();
+  }
+
+  async function toggleDsActive(s: Ds) {
+    setMsg(null);
+    setError(null);
+    const res = await fetch("/api/admin/data-sources/" + s.id, {
+      method: "PATCH",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ active: !s.active }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(data.error || "HTTP " + res.status);
+      return;
+    }
+    setMsg("DataSource " + s.slug + " active=" + data.active);
+    await load();
+  }
+
   return (
     <div className="space-y-8">
       <div>
@@ -287,6 +323,15 @@ export default function AdminRegistryPage() {
                 <p>slug: {o.slug}</p>
                 <p>{o.name}</p>
                 <p>sources: {o._count?.dataSources ?? "-"}</p>
+                <p>published: {String(o.published)}</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => toggleOrgPublished(o)}
+                >
+                  Toggle published
+                </Button>
               </CardContent>
             </Card>
           ))}
@@ -308,6 +353,15 @@ export default function AdminRegistryPage() {
                 </p>
                 <p>org: {s.organization?.slug ?? "-"}</p>
                 <p>runs: {s._count?.runs ?? "-"}</p>
+                <p>active: {String(s.active)}</p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => toggleDsActive(s)}
+                >
+                  Toggle active
+                </Button>
                 <p>
                   lastRun:{" "}
                   {s.lastRunAt
