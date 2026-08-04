@@ -31,10 +31,11 @@ function parseCsv(text: string) {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) throw new Error("CSV has no data rows");
   const sep = lines[0].includes(";") ? ";" : ",";
-  const rawHeaders = lines[0].split(sep).map((h) => h.trim());
-  const headers = rawHeaders.map((h) =>
+  const headers = lines[0].split(sep).map((h) =>
     h
+      .trim()
       .replace(/^"+|"+$/g, "")
+      .replace(/^'+|'+$/g, "")
       .trim()
       .toLowerCase()
   );
@@ -45,28 +46,131 @@ function parseCsv(text: string) {
       const cols = line.split(sep);
       const row: Record<string, string> = {};
       headers.forEach((h, i) => {
-        row[h] = (cols[i] || "").trim().replace(/^"|"$/g, "");
+        if (!h) return;
+        row[h] = (cols[i] || "").trim().replace(/^"+|"+$/g, "");
       });
       return row;
     });
 }
 
+function normalizeKey(h: string): string {
+  return h
+    .replace(/^"+|"+$/g, "")
+    .replace(/^'+|'+$/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function normalizeRow(row: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(row)) {
+    const nk = normalizeKey(k);
+    if (!nk) continue;
+    out[nk] = String(v ?? "")
+      .trim()
+      .replace(/^"+|"+$/g, "");
+  }
+  return out;
+}
+
 function pick(row: Record<string, string>, keys: string[]) {
+  const entries = Object.entries(row);
   for (const k of keys) {
-    const found = Object.keys(row).find((h) => h.toLowerCase().includes(k));
-    if (found && row[found]) return row[found];
+    const found = entries.find(([h]) => h.includes(k));
+    if (found && found[1]) return found[1];
   }
   return null;
 }
 
-function extractJudet(explicatii: string | null): string | null {
-  if (!explicatii) return null;
-  // Ex: "TRANSFERURI PNRR CF. OUG 124/2021 Alba"
-  const m = explicatii.match(/OUG\s*124\/2021\s+([A-Za-zăâîșțĂÂÎȘȚ\-\s]+)/i);
-  if (m) return m[1].trim();
-  // fallback: ultimele cuvinte
-  const parts = explicatii.trim().split(/\s+/);
-  return parts.length > 2 ? parts.slice(-2).join(" ") : null;
+function excelSerialToDate(raw: string | null): string | null {
+  if (!raw) return null;
+  const t = raw.trim();
+  if (!t) return null;
+  if (/^\d{4}[-./]\d{1,2}[-./]\d{1,2}/.test(t)) return t;
+  if (/^\d{1,2}[-./]\d{1,2}[-./]\d{2,4}/.test(t)) return t;
+  const n = parseFloat(t.replace(",", "."));
+  if (!Number.isFinite(n) || n < 20000 || n > 60000) return t;
+  const epoch = Date.UTC(1899, 11, 30);
+  const d = new Date(epoch + Math.round(n) * 86400000);
+  if (Number.isNaN(d.getTime())) return t;
+  return d.toISOString().slice(0, 10);
+}
+
+const JUDETE = [
+  "Alba",
+  "Arad",
+  "Argeș",
+  "Arges",
+  "Bacău",
+  "Bacau",
+  "Bihor",
+  "Bistrița",
+  "Bistrita",
+  "Botoșani",
+  "Botosani",
+  "Brăila",
+  "Braila",
+  "Brașov",
+  "Brasov",
+  "București",
+  "Bucuresti",
+  "Buzău",
+  "Buzau",
+  "Călărași",
+  "Calarasi",
+  "Caraș",
+  "Caras",
+  "Cluj",
+  "Constanța",
+  "Constanta",
+  "Covasna",
+  "Dâmbovița",
+  "Dambovita",
+  "Dolj",
+  "Galați",
+  "Galati",
+  "Giurgiu",
+  "Gorj",
+  "Harghita",
+  "Hunedoara",
+  "Ialomița",
+  "Ialomita",
+  "Iași",
+  "Iasi",
+  "Ilfov",
+  "Maramureș",
+  "Maramures",
+  "Mehedinți",
+  "Mehedinti",
+  "Mureș",
+  "Mures",
+  "Neamț",
+  "Neamt",
+  "Olt",
+  "Prahova",
+  "Sălaj",
+  "Salaj",
+  "Satu Mare",
+  "Sibiu",
+  "Suceava",
+  "Teleorman",
+  "Timiș",
+  "Timis",
+  "Tulcea",
+  "Vâlcea",
+  "Valcea",
+  "Vaslui",
+  "Vrancea",
+];
+
+function extractJudet(text: string | null): string | null {
+  if (!text) return null;
+  const upper = text.toUpperCase();
+  for (const j of JUDETE) {
+    if (upper.includes(j.toUpperCase())) return j;
+  }
+  const m = text.match(/OUG\s*124\/2021\s+([A-Za-zăâîșțĂÂÎȘȚ\-]+)/i);
+  return m ? m[1].trim() : null;
 }
 
 function fileHash(content: string): string {
@@ -169,7 +273,9 @@ async function main() {
 
   try {
     for (const row of rows) {
-      const sumaRaw = pick(row, ["suma", "valoare", "plata", "amount"]);
+      const r = normalizeRow(row);
+
+      const sumaRaw = pick(r, ["suma", "valoare", "plata", "amount"]);
       let suma: number | null = null;
       if (sumaRaw) {
         const n = parseFloat(
@@ -178,23 +284,39 @@ async function main() {
         suma = Number.isFinite(n) ? n : null;
       }
 
-      const explicatii = pick(row, [
+      const explicatii = pick(r, [
         "explicat",
         "explicatii",
         "observat",
         "detalii",
       ]);
+      const dataRaw = pick(r, [
+        "data",
+        "date",
+        "luna",
+        "data plata",
+        "dataplata",
+      ]);
+      const beneficiar = pick(r, [
+        "beneficiar",
+        "primarie",
+        "uats",
+        "solicitant",
+      ]);
+
       const draft = {
-        componenta: pick(row, ["component", "comp"]),
+        componenta: pick(r, ["component", "comp"]) || "PNRR",
         investitie:
-          pick(row, ["invest", "masura", "titlu", "proiect", "denumire"]) ||
+          pick(r, ["invest", "masura", "titlu", "proiect", "denumire"]) ||
           explicatii,
-        beneficiar: pick(row, ["beneficiar", "primarie", "uats", "solicitant"]),
+        beneficiar,
         suma,
-        moneda: pick(row, ["moneda", "currency"]) || "RON",
-        dataPlata: pick(row, ["data", "date", "luna"]),
+        moneda: pick(r, ["moneda", "currency"]) || "RON",
+        dataPlata: excelSerialToDate(dataRaw),
         judet:
-          pick(row, ["judet", "județ", "county"]) || extractJudet(explicatii),
+          pick(r, ["judet", "județ", "county"]) ||
+          extractJudet(explicatii) ||
+          extractJudet(beneficiar),
         sourceUrl,
       };
 
@@ -204,7 +326,7 @@ async function main() {
       payload.push({
         ...draft,
         sourceFile: file,
-        rawJson: JSON.stringify(row),
+        rawJson: JSON.stringify(r),
         dataStatus: v.dataStatus,
         completenessScore: v.completenessScore,
         validationReport: v.reportJson,
