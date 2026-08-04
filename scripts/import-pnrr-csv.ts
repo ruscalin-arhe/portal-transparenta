@@ -28,13 +28,15 @@ if (!existsSync(file)) fail("File not found: " + file);
 if (!process.env.DATABASE_URL) fail("DATABASE_URL missing");
 
 function parseCsv(text: string) {
-  const lines = text.trim().split(/?
-/);
+  const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) throw new Error("CSV has no data rows");
   const sep = lines[0].includes(";") ? ";" : ",";
   const rawHeaders = lines[0].split(sep).map((h) => h.trim());
   const headers = rawHeaders.map((h) =>
-    h.replace(/^"+|"+$/g, "").trim().toLowerCase()
+    h
+      .replace(/^"+|"+$/g, "")
+      .trim()
+      .toLowerCase()
   );
   return lines
     .slice(1)
@@ -176,21 +178,23 @@ async function main() {
         suma = Number.isFinite(n) ? n : null;
       }
 
-      const explicatii = pick(row, ["explicat", "explicatii", "observat", "detalii"]);
+      const explicatii = pick(row, [
+        "explicat",
+        "explicatii",
+        "observat",
+        "detalii",
+      ]);
       const draft = {
         componenta: pick(row, ["component", "comp"]),
-        investitie: pick(row, [
-          "invest",
-          "masura",
-          "titlu",
-          "proiect",
-          "denumire",
-        ]) || explicatii,
+        investitie:
+          pick(row, ["invest", "masura", "titlu", "proiect", "denumire"]) ||
+          explicatii,
         beneficiar: pick(row, ["beneficiar", "primarie", "uats", "solicitant"]),
         suma,
         moneda: pick(row, ["moneda", "currency"]) || "RON",
         dataPlata: pick(row, ["data", "date", "luna"]),
-        judet: pick(row, ["judet", "județ", "county"]) || extractJudet(explicatii),
+        judet:
+          pick(row, ["judet", "județ", "county"]) || extractJudet(explicatii),
         sourceUrl,
       };
 
