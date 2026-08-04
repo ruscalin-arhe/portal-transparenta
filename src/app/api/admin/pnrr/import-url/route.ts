@@ -70,12 +70,15 @@ export async function POST(request: Request) {
         }
       }
 
-      const headers = (rows[headerIdx] || []).map((h: any) =>
-        String(h || "")
-          .trim()
-          .toLowerCase()
-          .replace(/^"+|"+$/g, "")
-      );
+      const headers = (rows[headerIdx] || [])
+        .map((h: any) =>
+          String(h || "")
+            .trim()
+            .toLowerCase()
+            .replace(/^"+|"+$/g, "")
+            .replace(/^'+|'+$/g, "")
+        )
+        .filter(Boolean);
       const dataRows = rows.slice(headerIdx + 1);
 
       // CSV curat
