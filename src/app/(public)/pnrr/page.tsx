@@ -23,7 +23,22 @@ type Plata = {
 };
 
 type Payload = {
-  meta: { total: number; sumaTotala: number; note: string };
+  meta: {
+    total: number;
+    sumaTotala: number;
+    note: string;
+    dataSource?: {
+      name: string | null;
+      sourceUrl: string | null;
+      lastRunAt: string | null;
+      lastRun: {
+        id: string;
+        finishedAt: string | null;
+        recordsOk: number | null;
+        recordsTotal: number | null;
+      } | null;
+    } | null;
+  };
   byJudet: {
     judet: string | null;
     _sum: { suma: number | null };
@@ -31,6 +46,23 @@ type Payload = {
   }[];
   recent: Plata[];
 };
+
+function formatDate(iso: string | null | undefined) {
+  if (!iso) return null;
+  return new Date(iso).toLocaleDateString("ro-RO", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function freshnessBadge(lastRunAt: string | null | undefined) {
+  if (!lastRunAt) return { text: "Fără date", className: "bg-muted text-muted-foreground" };
+  const days = (Date.now() - new Date(lastRunAt).getTime()) / (1000 * 60 * 60 * 24);
+  if (days <= 14) return { text: `Actualizat ${formatDate(lastRunAt)}`, className: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300" };
+  if (days <= 45) return { text: `Actualizat ${formatDate(lastRunAt)}`, className: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300" };
+  return { text: `Vechi · ${formatDate(lastRunAt)}`, className: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300" };
+}
 
 function formatSuma(n: number | null | undefined) {
   if (n == null) return "—";
@@ -67,6 +99,25 @@ export default function PnrrPage() {
           Plati / alocari din surse publice importate (Open Data / fisiere
           oficiale). Fiecare rand pastreaza linkul sursei.
         </p>
+        {data?.meta?.dataSource && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {(() => {
+              const badge = freshnessBadge(
+                data.meta.dataSource.lastRun?.finishedAt ?? data.meta.dataSource.lastRunAt
+              );
+              return (
+                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.className}`}>
+                  {badge.text}
+                </span>
+              );
+            })()}
+            {data.meta.dataSource.lastRun?.recordsOk != null && (
+              <span className="text-muted-foreground text-xs">
+                {data.meta.dataSource.lastRun.recordsOk} înregistrări din ultimul run
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="max-w-sm">

@@ -40,6 +40,9 @@ export default function AdminPnrrPage() {
   const [error, setError] = useState(null as string | null);
   const [msg, setMsg] = useState(null as string | null);
   const [loading, setLoading] = useState(true);
+  const [importUrl, setImportUrl] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState<string | null>(null);
 
   async function load(st = status, runId = dataRunId) {
     setLoading(true);
@@ -129,6 +132,53 @@ export default function AdminPnrrPage() {
           Inregistrari cu date lipsa sau insuficiente — completare si validare
         </p>
       </div>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base">Import din URL (S2)</CardTitle>
+          <p className="text-muted-foreground text-xs">
+            Lipește link data.gov.ro sau link direct .xls / .xlsx / .csv
+          </p>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1 space-y-1">
+            <Label>URL</Label>
+            <Input
+              placeholder="https://data.gov.ro/.../download/....xls"
+              value={importUrl}
+              onChange={(e) => setImportUrl(e.target.value)}
+            />
+          </div>
+          <Button
+            type="button"
+            disabled={importing || !importUrl}
+            onClick={async () => {
+              setImporting(true);
+              setImportMsg(null);
+              try {
+                const res = await fetch("/api/admin/pnrr/import-url", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ url: importUrl }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || data.detail || "Eroare");
+                setImportMsg("Import reușit! Se reîncarcă...");
+                setTimeout(() => window.location.reload(), 800);
+              } catch (e) {
+                setImportMsg(e instanceof Error ? e.message : "Eroare");
+              } finally {
+                setImporting(false);
+              }
+            }}
+          >
+            {importing ? "Se importă..." : "Importă acum"}
+          </Button>
+        </CardContent>
+        {importMsg && (
+          <p className="text-sm px-6 pb-4 text-muted-foreground">{importMsg}</p>
+        )}
+      </Card>
 
       <div className="flex flex-wrap gap-2 text-xs">
         {counts.map((c) => (

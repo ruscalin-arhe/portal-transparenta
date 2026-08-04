@@ -28,10 +28,14 @@ if (!existsSync(file)) fail("File not found: " + file);
 if (!process.env.DATABASE_URL) fail("DATABASE_URL missing");
 
 function parseCsv(text: string) {
-  const lines = text.trim().split(/\r?\n/);
+  const lines = text.trim().split(/?
+/);
   if (lines.length < 2) throw new Error("CSV has no data rows");
   const sep = lines[0].includes(";") ? ";" : ",";
-  const headers = lines[0].split(sep).map((h) => h.trim().toLowerCase());
+  const rawHeaders = lines[0].split(sep).map((h) => h.trim());
+  const headers = rawHeaders.map((h) =>
+    h.replace(/^"+|"+$/g, "").trim().toLowerCase()
+  );
   return lines
     .slice(1)
     .filter(Boolean)
@@ -47,10 +51,20 @@ function parseCsv(text: string) {
 
 function pick(row: Record<string, string>, keys: string[]) {
   for (const k of keys) {
-    const found = Object.keys(row).find((h) => h.includes(k));
+    const found = Object.keys(row).find((h) => h.toLowerCase().includes(k));
     if (found && row[found]) return row[found];
   }
   return null;
+}
+
+function extractJudet(explicatii: string | null): string | null {
+  if (!explicatii) return null;
+  // Ex: "TRANSFERURI PNRR CF. OUG 124/2021 Alba"
+  const m = explicatii.match(/OUG\s*124\/2021\s+([A-Za-zăâîșțĂÂÎȘȚ\-\s]+)/i);
+  if (m) return m[1].trim();
+  // fallback: ultimele cuvinte
+  const parts = explicatii.trim().split(/\s+/);
+  return parts.length > 2 ? parts.slice(-2).join(" ") : null;
 }
 
 function fileHash(content: string): string {
@@ -109,6 +123,10 @@ async function main() {
     "| ds:",
     dataSource.slug
   );
+  if (rows.length > 0) {
+    console.log("HEADERS:", Object.keys(rows[0]));
+    console.log("FIRST ROW:", JSON.stringify(rows[0]).slice(0, 300));
+  }
 
   const run = await prisma.dataRun.create({
     data: {
@@ -158,6 +176,7 @@ async function main() {
         suma = Number.isFinite(n) ? n : null;
       }
 
+      const explicatii = pick(row, ["explicat", "explicatii", "observat", "detalii"]);
       const draft = {
         componenta: pick(row, ["component", "comp"]),
         investitie: pick(row, [
@@ -166,12 +185,12 @@ async function main() {
           "titlu",
           "proiect",
           "denumire",
-        ]),
+        ]) || explicatii,
         beneficiar: pick(row, ["beneficiar", "primarie", "uats", "solicitant"]),
         suma,
         moneda: pick(row, ["moneda", "currency"]) || "RON",
         dataPlata: pick(row, ["data", "date", "luna"]),
-        judet: pick(row, ["judet", "județ", "county"]),
+        judet: pick(row, ["judet", "județ", "county"]) || extractJudet(explicatii),
         sourceUrl,
       };
 
