@@ -12,6 +12,7 @@ import { NavAuth } from "@/components/shared/nav-auth";
 const nav = [
   { href: "/", label: "Acasa", icon: Home },
   { href: "/proiecte", label: "Proiecte", icon: FolderKanban },
+  { href: "/pnrr", label: "PNRR", icon: LayoutDashboard },
   { href: "/analiza", label: "Analiza", icon: LayoutDashboard },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/harta", label: "Harta", icon: Map },
@@ -25,41 +26,41 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex bg-background text-foreground">
-      <aside className="w-60 border-r bg-card hidden md:flex flex-col">
-        <div className="p-5 border-b">
-          <Link href="/" className="font-semibold text-lg leading-tight">
+    <div className="bg-background text-foreground flex min-h-screen">
+      <aside className="bg-card hidden w-60 flex-col border-r md:flex">
+        <div className="border-b p-5">
+          <Link href="/" className="text-lg leading-tight font-semibold">
             Portal Transparenta
           </Link>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 text-xs">
             Proiecte publice · informare societate civila
           </p>
         </div>
-        <nav className="flex-1 p-3 space-y-1" aria-label="Navigare principala">
+        <nav className="flex-1 space-y-1 p-3" aria-label="Navigare principala">
           {nav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-muted transition-colors"
+              className="hover:bg-muted flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors"
             >
               <item.icon className="size-4 shrink-0" aria-hidden="true" />
               {item.label}
             </Link>
           ))}
         </nav>
-        <div className="p-3 border-t space-y-1">
+        <div className="space-y-1 border-t p-3">
           <NavAuth />
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="md:hidden border-b px-4 py-3 flex items-center justify-between gap-3">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center justify-between gap-3 border-b px-4 py-3 md:hidden">
           <Link href="/" className="font-semibold">
             Portal Transparenta
           </Link>
           <NavAuth />
         </header>
-        <main className="flex-1 container mx-auto px-4 py-8 max-w-6xl">
+        <main className="container mx-auto max-w-6xl flex-1 px-4 py-8">
           {children}
         </main>
       </div>
