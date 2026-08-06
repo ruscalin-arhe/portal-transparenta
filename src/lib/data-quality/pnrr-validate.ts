@@ -21,6 +21,59 @@ const CORE = ["beneficiar", "suma", "dataPlata"] as const;
 /** Câmpuri care completează scorul (format bogat PNRR). */
 const EXTRA = ["componenta", "investitie", "judet"] as const;
 
+const JUDETE = [
+  "Alba",
+  "Arad",
+  "Arges",
+  "Bacau",
+  "Bihor",
+  "Bistrita-Nasaud",
+  "Botosani",
+  "Brasov",
+  "Braila",
+  "Buzau",
+  "Caras-Severin",
+  "Calarasi",
+  "Cluj",
+  "Constanta",
+  "Covasna",
+  "Dambovita",
+  "Dolj",
+  "Galati",
+  "Giurgiu",
+  "Gorj",
+  "Harghita",
+  "Hunedoara",
+  "Ialomita",
+  "Iasi",
+  "Ilfov",
+  "Maramures",
+  "Mehedinti",
+  "Mures",
+  "Neamt",
+  "Olt",
+  "Prahova",
+  "Satu Mare",
+  "Salaj",
+  "Sibiu",
+  "Suceava",
+  "Teleorman",
+  "Timis",
+  "Tulcea",
+  "Vaslui",
+  "Valcea",
+  "Vrancea",
+  "Bucuresti",
+] as const;
+
+function isValidJudet(j: string | null | undefined): boolean {
+  if (!j || !j.trim()) return false;
+  const n = j.trim().toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  return JUDETE.some(
+    (x) => x.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "") === n
+  );
+}
+
 export function validatePnrrPlata(draft: PnrrDraft): PnrrValidation {
   const issues: string[] = [];
   let coreFilled = 0;
@@ -38,9 +91,13 @@ export function validatePnrrPlata(draft: PnrrDraft): PnrrValidation {
 
   for (const key of EXTRA) {
     const v = draft[key];
-    const ok = typeof v === "string" && v.trim().length > 0;
+    let ok = typeof v === "string" && v.trim().length > 0;
+    if (key === "judet" && ok && !isValidJudet(v as string)) {
+      ok = false;
+      issues.push("Judet invalid (nu e in lista 42): " + v);
+    }
     if (ok) extraFilled++;
-    else issues.push("Lipsa sau invalid: " + key);
+    else if (key !== "judet" || !v) issues.push("Lipsa sau invalid: " + key);
   }
 
   const total = CORE.length + EXTRA.length;

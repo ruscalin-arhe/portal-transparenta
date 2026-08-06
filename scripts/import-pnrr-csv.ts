@@ -165,12 +165,82 @@ const JUDETE = [
 
 function extractJudet(text: string | null): string | null {
   if (!text) return null;
-  const upper = text.toUpperCase();
-  for (const j of JUDETE) {
-    if (upper.includes(j.toUpperCase())) return j;
+  const t = text.trim();
+  const JUDETE = [
+    "Alba",
+    "Arad",
+    "Arges",
+    "Bacau",
+    "Bihor",
+    "Bistrita-Nasaud",
+    "Botosani",
+    "Brasov",
+    "Braila",
+    "Buzau",
+    "Caras-Severin",
+    "Calarasi",
+    "Cluj",
+    "Constanta",
+    "Covasna",
+    "Dambovita",
+    "Dolj",
+    "Galati",
+    "Giurgiu",
+    "Gorj",
+    "Harghita",
+    "Hunedoara",
+    "Ialomita",
+    "Iasi",
+    "Ilfov",
+    "Maramures",
+    "Mehedinti",
+    "Mures",
+    "Neamt",
+    "Olt",
+    "Prahova",
+    "Satu Mare",
+    "Salaj",
+    "Sibiu",
+    "Suceava",
+    "Teleorman",
+    "Timis",
+    "Tulcea",
+    "Vaslui",
+    "Valcea",
+    "Vrancea",
+    "Bucuresti",
+  ];
+  const norm = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[-\s]+/g, " ")
+      .trim();
+
+  // "Oravita jud Caras Severin" / "JUD. TULCEA"
+  let m = t.match(/jud\.?\s+([A-Za-zăâîșțĂÂÎȘȚ\s\-]+)/i);
+  if (m) {
+    const cand = norm(m[1]);
+    const hit = JUDETE.find(
+      (j) =>
+        norm(j) === cand || cand.startsWith(norm(j)) || norm(j).startsWith(cand)
+    );
+    if (hit) return hit;
   }
-  const m = text.match(/OUG\s*124\/2021\s+([A-Za-zăâîșțĂÂÎȘȚ\-]+)/i);
-  return m ? m[1].trim() : null;
+  // OUG 124/2021 Alba
+  m = t.match(/OUG\s*124\/2021\s+([A-Za-zăâîșțĂÂÎȘȚ\s\-]+)/i);
+  if (m) {
+    const cand = norm(m[1]);
+    const hit = JUDETE.find((j) => norm(j) === cand);
+    if (hit) return hit;
+  }
+  // orice județ din listă care apare ca cuvânt
+  for (const j of JUDETE) {
+    if (new RegExp("\\b" + j.replace(/-/g, "[-\\s]?") + "\\b", "i").test(t))
+      return j;
+  }
+  return null;
 }
 
 function fileHash(content: string): string {
@@ -305,10 +375,31 @@ async function main() {
       ]);
 
       const draft = {
-        componenta: pick(r, ["component", "comp"]) || "PNRR",
+        componenta:
+          pick(r, ["componenta", "component", "comp"]) ||
+          (explicatii && explicatii.match(/C\s*\d+/i)?.[0]) ||
+          String(pick(r, ["invest", "explicat"]) || "").match(
+            /C\s*\d+/i
+          )?.[0] ||
+          "PNRR",
         investitie:
-          pick(r, ["invest", "masura", "titlu", "proiect", "denumire"]) ||
-          explicatii,
+          pick(r, [
+            "invest",
+            "masura",
+            "titlu",
+            "proiect",
+            "denumire",
+            "investitie",
+          ]) ||
+          pick(r, [
+            "explicat",
+            "explicatii",
+            "observa",
+            "detalii",
+            "descriere",
+          ]) ||
+          explicatii ||
+          null,
         beneficiar,
         suma,
         moneda: pick(r, ["moneda", "currency"]) || "RON",
@@ -316,6 +407,16 @@ async function main() {
         judet:
           pick(r, ["judet", "județ", "county"]) ||
           extractJudet(explicatii) ||
+          extractJudet(
+            pick(r, [
+              "invest",
+              "masura",
+              "titlu",
+              "proiect",
+              "denumire",
+              "explicat",
+            ])
+          ) ||
           extractJudet(beneficiar),
         sourceUrl,
       };
@@ -333,6 +434,23 @@ async function main() {
         published: v.dataStatus !== "MISSING_DATA",
         dataRunId: run.id,
       });
+    }
+
+    // Completează judet din același batch (beneficiar cu judet → cei fără)
+    {
+      const byBenef = new Map<string, string>();
+      for (const p of payload) {
+        if (p.beneficiar && p.judet) {
+          const k = p.beneficiar.trim().toLowerCase();
+          if (!byBenef.has(k)) byBenef.set(k, p.judet);
+        }
+      }
+      for (const p of payload) {
+        if (p.beneficiar && !p.judet) {
+          const j = byBenef.get(p.beneficiar.trim().toLowerCase());
+          if (j) p.judet = j;
+        }
+      }
     }
 
     let inserted = 0;
