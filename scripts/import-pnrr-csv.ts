@@ -6,7 +6,9 @@ import { withRetry } from "../src/lib/db/retry";
 
 const prisma = new PrismaClient();
 const CHUNK = 50;
-const DS_SLUG = "pnrr-plati";
+const DS_SLUG =
+  process.argv.find((a) => a.startsWith("--source="))?.split("=")[1] ||
+  "pnrr-plati";
 
 function fail(msg: string, code = 1): never {
   console.error("ERROR:", msg);
