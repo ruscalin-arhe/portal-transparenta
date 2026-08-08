@@ -6,6 +6,7 @@ import {
   FileText,
   MessageSquareWarning,
   Home,
+  ShoppingCart,
 } from "lucide-react";
 import { NavAuth } from "@/components/shared/nav-auth";
 
@@ -13,6 +14,7 @@ const nav = [
   { href: "/", label: "Acasa", icon: Home },
   { href: "/proiecte", label: "Proiecte", icon: FolderKanban },
   { href: "/pnrr", label: "PNRR", icon: LayoutDashboard },
+  { href: "/achizitii", label: "Achizitii", icon: ShoppingCart },
   { href: "/analiza", label: "Analiza", icon: LayoutDashboard },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/harta", label: "Harta", icon: Map },

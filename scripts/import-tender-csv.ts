@@ -16,6 +16,7 @@
 import { createHash } from "crypto";
 import { readFileSync, existsSync } from "fs";
 import { PrismaClient, Prisma } from "@prisma/client";
+import * as XLSX from "xlsx";
 
 const prisma = new PrismaClient();
 const CHUNK = 50;
@@ -126,28 +127,36 @@ async function main() {
     fail(`DataSource "${DS_SLUG}" negasit. Creează-l din /admin/registry.`);
   }
 
-  const rawText = readFileSync(file, "utf8");
-  const hash = fileHash(rawText);
-  console.log("fileHash:", hash.slice(0, 12) + "...");
+  const isXlsx =
+    file.toLowerCase().endsWith(".xlsx") || file.toLowerCase().endsWith(".xls");
+  let rows: Record<string, string>[];
+  let hashInput: string;
 
-  if (!force) {
-    const recent = await prisma.dataRun.findMany({
-      where: { dataSourceId: dataSource.id, status: "ok" },
-      orderBy: { createdAt: "desc" },
-      take: 50,
+  if (isXlsx) {
+    const buf = readFileSync(file);
+    hashInput = createHash("sha256").update(buf).digest("hex");
+    const wb = XLSX.read(buf, { type: "buffer", cellDates: true });
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+      defval: "",
     });
-    const dup = recent.find((r) => metaFileHash(r.metadata) === hash);
-    if (dup) {
-      console.log(
-        "SKIP: deja importat (DataRun " + dup.id + "). Folosește --force."
-      );
-      return;
-    }
+    rows = json.map((r) => {
+      const out: Record<string, string> = {};
+      for (const [k, v] of Object.entries(r)) {
+        const key = String(k).trim().toLowerCase();
+        out[key] = v == null ? "" : String(v).trim();
+      }
+      return out;
+    });
+    console.log("XLSX sheet:", wb.SheetNames[0], "rows:", rows.length);
   } else {
-    console.log("FORCE: reimport");
+    const rawText = readFileSync(file, "utf8");
+    hashInput = fileHash(rawText);
+    rows = parseCsv(rawText);
   }
 
-  const rows = parseCsv(rawText);
+  const hash = isXlsx ? hashInput : hashInput;
+  console.log("fileHash:", hash.slice(0, 12) + "...");
   console.log("rows:", rows.length);
 
   const run = await prisma.dataRun.create({
@@ -167,7 +176,16 @@ async function main() {
   let recordsError = 0;
 
   for (const row of rows) {
-    const title = pick(row, ["title", "titlu", "denumire", "obiect", "name"]);
+    const title = pick(row, [
+      "title",
+      "titlu",
+      "denumire",
+      "denumire procedura",
+      "denumire cpv",
+      "obiect",
+      "name",
+      "denumireprocedura",
+    ]);
     if (!title) {
       recordsError += 1;
       continue;
@@ -200,8 +218,16 @@ async function main() {
 
     payload.push({
       externalId:
-        pick(row, ["external_id", "nr_anunt", "id", "cod", "notice_id"]) ||
-        null,
+        pick(row, [
+          "external_id",
+          "nr_anunt",
+          "numar anunt initiere",
+          "numar anunt",
+          "id",
+          "cod",
+          "notice_id",
+          "numaranuntinitiere",
+        ]) || null,
       title,
       cpvCodes,
       cpvMain,
@@ -215,7 +241,14 @@ async function main() {
           "contracting_authority",
           "autoritate_contractanta",
         ]) || null,
-      status: pick(row, ["status", "stare", "stare_anunt"]) || null,
+      status:
+        pick(row, [
+          "status",
+          "stare",
+          "stare procedura",
+          "stare_anunt",
+          "stareprocedura",
+        ]) || null,
       publicationDate: parseDate(
         pick(row, [
           "publication_date",
@@ -228,7 +261,13 @@ async function main() {
         pick(row, ["deadline", "data_limita", "data_limita_depunere"])
       ),
       procedureType:
-        pick(row, ["procedure", "tip_procedura", "procedure_type"]) || null,
+        pick(row, [
+          "procedure",
+          "tip_procedura",
+          "tip procedura",
+          "procedure_type",
+          "tipprocedura",
+        ]) || null,
       sourceUrl,
       sourceFile: file,
       rawJson: JSON.stringify(row),
