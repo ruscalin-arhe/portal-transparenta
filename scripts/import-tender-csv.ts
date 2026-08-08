@@ -290,14 +290,57 @@ async function main() {
   }
 
   let inserted = 0;
+  let updated = 0;
   for (let i = 0; i < payload.length; i += CHUNK) {
     const chunk = payload.slice(i, i + CHUNK);
-    await prisma.tender.createMany({ data: chunk });
-    inserted += chunk.length;
-    console.log("[batch]", inserted + "/" + payload.length);
+    for (const row of chunk) {
+      if (row.externalId) {
+        const existing = await prisma.tender.findFirst({
+          where: { externalId: row.externalId },
+          select: { id: true },
+        });
+        if (existing) {
+          await prisma.tender.update({
+            where: { id: existing.id },
+            data: {
+              title: row.title,
+              cpvCodes: row.cpvCodes,
+              cpvMain: row.cpvMain,
+              valueEstimated: row.valueEstimated,
+              valueCurrency: row.valueCurrency,
+              contractingAuthority: row.contractingAuthority,
+              status: row.status,
+              publicationDate: row.publicationDate,
+              deadline: row.deadline,
+              procedureType: row.procedureType,
+              sourceUrl: row.sourceUrl,
+              sourceFile: row.sourceFile,
+              rawJson: row.rawJson,
+              published: row.published,
+              dataRunId: row.dataRunId,
+            },
+          });
+          updated += 1;
+        } else {
+          await prisma.tender.create({ data: row });
+          inserted += 1;
+        }
+      } else {
+        await prisma.tender.create({ data: row });
+        inserted += 1;
+      }
+    }
+    console.log(
+      "[batch]",
+      i + chunk.length + "/" + payload.length,
+      "(new:",
+      inserted,
+      "upd:",
+      updated + ")"
+    );
   }
 
-  const recordsOk = inserted;
+  const recordsOk = inserted + updated;
   await prisma.dataRun.update({
     where: { id: run.id },
     data: {
