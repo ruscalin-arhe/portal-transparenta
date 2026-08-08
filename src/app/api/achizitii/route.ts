@@ -20,10 +20,13 @@ export async function GET(request: Request) {
       ];
     }
     if (q) {
-      where.OR = [
-        ...(Array.isArray(where.OR) ? where.OR : []),
-        { title: { contains: q, mode: "insensitive" } },
-        { contractingAuthority: { contains: q, mode: "insensitive" } },
+      where.AND = [
+        {
+          OR: [
+            { title: { contains: q, mode: "insensitive" } },
+            { contractingAuthority: { contains: q, mode: "insensitive" } },
+          ],
+        },
       ];
     }
 
