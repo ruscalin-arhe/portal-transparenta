@@ -83,9 +83,15 @@ function pick(row: Record<string, string>, keys: string[]): string {
 
 function parseNumber(raw: string): number | null {
   if (!raw) return null;
-  const n = parseFloat(
-    raw.replace(/\s/g, "").replace(/\./g, "").replace(",", ".")
-  );
+  let s = raw.replace(/\s/g, "");
+  // Dacă are și punct și virgulă → punct = mii, virgulă = zecimal
+  if (s.includes(".") && s.includes(",")) {
+    s = s.replace(/\./g, "").replace(",", ".");
+  } else if (s.includes(",")) {
+    s = s.replace(",", ".");
+  }
+  // altfel lasă punctul ca zecimal (format en)
+  const n = parseFloat(s);
   return Number.isFinite(n) ? n : null;
 }
 
