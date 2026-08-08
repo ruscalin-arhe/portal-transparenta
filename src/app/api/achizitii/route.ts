@@ -6,6 +6,12 @@ export const runtime = "nodejs";
 
 export async function GET(request: Request) {
   try {
+    // Browser navigation → UI page (evită JSON pretty-print)
+    const accept = request.headers.get("accept") || "";
+    if (accept.includes("text/html") && !accept.includes("application/json")) {
+      return NextResponse.redirect(new URL("/achizitii", request.url));
+    }
+
     const { searchParams } = new URL(request.url);
     const cpv = searchParams.get("cpv");
     const q = searchParams.get("q");
