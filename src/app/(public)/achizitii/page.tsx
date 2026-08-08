@@ -52,7 +52,7 @@ export default async function AchizitiiPage() {
             valueCurrency: string | null;
             contractingAuthority: string | null;
             status: string | null;
-            publicationDate: string | null;
+            publicationDate: string | Date | null;
           }) => (
             <article
               key={t.id}
