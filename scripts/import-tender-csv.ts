@@ -98,15 +98,31 @@ function parseNumber(raw: string): number | null {
 
 function parseDate(raw: string): Date | null {
   if (!raw) return null;
-  // ISO or DD.MM.YYYY or Excel serial
-  if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return new Date(raw);
-  const m = raw.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})/);
+  const s = raw.trim();
+  // Already a Date string from XLSX cellDates
+  const asDate = new Date(s);
+  if (
+    !Number.isNaN(asDate.getTime()) &&
+    /[a-zA-Z-]/.test(s) &&
+    !/^\d+(\.\d+)?$/.test(s)
+  ) {
+    return asDate;
+  }
+  // ISO
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const d = new Date(s);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  // DD.MM.YYYY or DD/MM/YYYY
+  const m = s.match(/^(\d{1,2})[./](\d{1,2})[./](\d{4})/);
   if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
-  const serial = parseFloat(raw);
-  if (Number.isFinite(serial) && serial > 30000) {
-    // Excel serial → JS date
-    const d = new Date(Date.UTC(1899, 11, 30) + serial * 86400000);
-    return d;
+  // Excel serial (days since 1899-12-30)
+  const serial = parseFloat(s.replace(",", "."));
+  if (Number.isFinite(serial) && serial > 20000 && serial < 80000) {
+    const utc = Date.UTC(1899, 11, 30) + Math.floor(serial) * 86400000;
+    // fraction = time of day
+    const frac = serial - Math.floor(serial);
+    return new Date(utc + Math.round(frac * 86400000));
   }
   return null;
 }
@@ -143,8 +159,10 @@ async function main() {
     rows = json.map((r) => {
       const out: Record<string, string> = {};
       for (const [k, v] of Object.entries(r)) {
-        const key = String(k).trim().toLowerCase();
-        out[key] = v == null ? "" : String(v).trim();
+        const key = String(k).trim().toLowerCase().replace(/\s+/g, " ");
+        let val = v == null ? "" : String(v).trim();
+        // Excel serial date leftover as number string
+        out[key] = val;
       }
       return out;
     });
@@ -176,27 +194,28 @@ async function main() {
   let recordsError = 0;
 
   for (const row of rows) {
-    const title = pick(row, [
-      "title",
-      "titlu",
-      "denumire",
-      "denumire procedura",
-      "denumire cpv",
-      "obiect",
-      "name",
-      "denumireprocedura",
-    ]);
+    // Mapare SEAP (headers lowercased + trimmed)
+    const title =
+      pick(row, [
+        "denumire procedura",
+        "denumire cpv",
+        "title",
+        "titlu",
+        "denumire",
+        "obiect",
+        "name",
+      ]) || "";
     if (!title) {
       recordsError += 1;
       continue;
     }
 
     const cpvRaw = pick(row, [
+      "cod cpv",
       "cpv",
       "cpv_main",
       "cod_cpv",
       "cpv_code",
-      "cpvcode",
     ]);
     const cpvCodes = cpvRaw
       ? cpvRaw
@@ -204,74 +223,68 @@ async function main() {
           .map((s) => s.trim())
           .filter(Boolean)
       : [];
-    const cpvMain = cpvCodes[0] || null;
+    // CPV SEAP: "34632300-9" → main fără sufix opțional
+    const cpvMain = cpvCodes[0] ? cpvCodes[0].split("-")[0] : null;
 
     const valueEstimated = parseNumber(
       pick(row, [
+        "valoare estimata procedura (ron)",
+        "valoare estimata",
         "value",
         "valoare",
-        "valoare_estimata",
-        "valoareestimata",
         "amount",
+      ])
+    );
+
+    const publicationDate = parseDate(
+      pick(row, [
+        "data publicare",
+        "publication_date",
+        "data_publicare",
+        "data",
       ])
     );
 
     payload.push({
       externalId:
         pick(row, [
-          "external_id",
-          "nr_anunt",
           "numar anunt initiere",
           "numar anunt",
+          "external_id",
+          "nr_anunt",
           "id",
-          "cod",
-          "notice_id",
-          "numaranuntinitiere",
         ]) || null,
       title,
       cpvCodes,
       cpvMain,
       valueEstimated,
-      valueCurrency: pick(row, ["currency", "moneda"]) || "RON",
+      valueCurrency:
+        pick(row, ["moneda", "currency", "valuecurrency"]) || "RON",
       contractingAuthority:
         pick(row, [
+          "autoritate contractanta",
           "authority",
           "autoritate",
           "beneficiar",
-          "contracting_authority",
-          "autoritate_contractanta",
         ]) || null,
       status:
-        pick(row, [
-          "status",
-          "stare",
-          "stare procedura",
-          "stare_anunt",
-          "stareprocedura",
-        ]) || null,
-      publicationDate: parseDate(
-        pick(row, [
-          "publication_date",
-          "data_publicare",
-          "data",
-          "published_at",
-        ])
-      ),
+        pick(row, ["stare procedura", "status", "stare", "stare_anunt"]) ||
+        null,
+      publicationDate,
       deadline: parseDate(
-        pick(row, ["deadline", "data_limita", "data_limita_depunere"])
+        pick(row, ["deadline", "data_limita", "data limita"])
       ),
       procedureType:
         pick(row, [
+          "tip procedura",
           "procedure",
           "tip_procedura",
-          "tip procedura",
           "procedure_type",
-          "tipprocedura",
         ]) || null,
       sourceUrl,
       sourceFile: file,
       rawJson: JSON.stringify(row),
-      published: true, // pentru început publicăm tot ce are title
+      published: true,
       dataRunId: run.id,
     });
   }
