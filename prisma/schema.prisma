@@ -173,4 +173,38 @@ model DataRun {
   metadata     Json?
   createdAt    DateTime   @default(now())
   pnrrPlati    PnrrPlata[]
+  tenders      Tender[]
 }
+
+model Tender {
+  id                   String    @id @default(cuid())
+  dataRunId            String?
+  dataRun              DataRun?  @relation(fields: [dataRunId], references: [id], onDelete: SetNull)
+
+  externalId           String?
+  title                String
+  cpvCodes             String[]  @default([])
+  cpvMain              String?
+  valueEstimated       Float?
+  valueCurrency        String?   @default("RON")
+  contractingAuthority String?
+  status               String?
+  publicationDate      DateTime?
+  deadline             DateTime?
+  procedureType        String?
+  sourceUrl            String
+  sourceFile           String?
+  rawJson              String?
+
+  published            Boolean   @default(false)
+  retrievedAt          DateTime  @default(now())
+  createdAt            DateTime  @default(now())
+
+  @@index([cpvMain])
+  @@index([status])
+  @@index([published])
+  @@index([dataRunId])
+  @@index([publicationDate])
+  @@index([externalId])
+}
+
