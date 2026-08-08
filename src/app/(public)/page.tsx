@@ -16,6 +16,7 @@ import {
   BarChart3,
   FileText,
   MessageSquareWarning,
+  ShoppingCart,
 } from "lucide-react";
 
 const fadeUp = {
@@ -30,7 +31,7 @@ const fadeUp = {
 export default function HomePage() {
   return (
     <div className="space-y-14">
-      <section className="text-center space-y-6 py-10">
+      <section className="space-y-6 py-10 text-center">
         <motion.h1
           className="text-4xl font-bold tracking-tight sm:text-5xl"
           initial={{ opacity: 0, y: -10 }}
@@ -40,14 +41,14 @@ export default function HomePage() {
           Portal Public de Transparență
         </motion.h1>
         <motion.p
-          className="text-lg text-muted-foreground max-w-2xl mx-auto"
+          className="text-muted-foreground mx-auto max-w-2xl text-lg"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          Informare publică privind proiectele de interes public: progres,
-          date financiare, documente și canale de sesizare — în sprijinul
-          societății civile și al obligațiilor de transparență.
+          Informare publică privind proiectele de interes public: progres, date
+          financiare, documente și canale de sesizare — în sprijinul societății
+          civile și al obligațiilor de transparență.
         </motion.p>
         <motion.div
           className="flex flex-wrap justify-center gap-4 pt-2"
@@ -56,19 +57,19 @@ export default function HomePage() {
           transition={{ delay: 0.35, duration: 0.5 }}
         >
           <Link href="/proiecte">
-            <Button size="lg" className="px-8 gap-2">
+            <Button size="lg" className="gap-2 px-8">
               <FolderKanban className="size-4" />
               Vezi proiecte
             </Button>
           </Link>
           <Link href="/dashboard">
-            <Button size="lg" variant="outline" className="px-8 gap-2">
+            <Button size="lg" variant="outline" className="gap-2 px-8">
               <BarChart3 className="size-4" />
               Dashboard
             </Button>
           </Link>
           <Link href="/harta">
-            <Button size="lg" variant="secondary" className="px-8 gap-2">
+            <Button size="lg" variant="secondary" className="gap-2 px-8">
               <Map className="size-4" />
               Hartă interactivă
             </Button>
@@ -108,6 +109,12 @@ export default function HomePage() {
             href: "/sesizari",
             icon: MessageSquareWarning,
           },
+          {
+            title: "Achiziții",
+            desc: "Anunțuri și contracte SEAP / SICAP",
+            href: "/achizitii",
+            icon: ShoppingCart,
+          },
         ].map((item, i) => (
           <motion.div
             key={item.title}
@@ -116,10 +123,10 @@ export default function HomePage() {
             animate="visible"
             variants={fadeUp}
           >
-            <Card className="h-full hover:shadow-md transition-shadow">
+            <Card className="h-full transition-shadow hover:shadow-md">
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                  <div className="bg-primary/10 text-primary rounded-lg p-2">
                     <item.icon className="size-5" />
                   </div>
                   <CardTitle>{item.title}</CardTitle>

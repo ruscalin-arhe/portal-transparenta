@@ -30,6 +30,9 @@ export default async function AdminLayout({
               <Link href="/admin/pnrr" className="hover:underline">
                 PNRR
               </Link>
+              <Link href="/admin/achizitii" className="hover:underline">
+                Achizitii
+              </Link>
               <Link href="/admin/trafic" className="hover:underline">
                 Trafic
               </Link>
