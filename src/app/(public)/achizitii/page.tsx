@@ -3,13 +3,28 @@ import Link from "next/link";
 export const dynamic = "force-dynamic";
 
 async function getTenders() {
-  const base = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   try {
-    const res = await fetch(`${base}/api/achizitii?take=50`, {
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) return { total: 0, data: [] };
-    return res.json();
+    // Pe server folosim prisma direct ca să evităm fetch self
+    const { prisma } = await import("@/lib/prisma");
+    const [data, total] = await Promise.all([
+      prisma.tender.findMany({
+        where: { published: true },
+        orderBy: { publicationDate: "desc" },
+        take: 50,
+        select: {
+          id: true,
+          title: true,
+          cpvMain: true,
+          valueEstimated: true,
+          valueCurrency: true,
+          contractingAuthority: true,
+          status: true,
+          publicationDate: true,
+        },
+      }),
+      prisma.tender.count({ where: { published: true } }),
+    ]);
+    return { total, data };
   } catch {
     return { total: 0, data: [] };
   }
