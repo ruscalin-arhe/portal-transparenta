@@ -22,7 +22,10 @@ type Ds = {
   type: string;
   channel: string;
   active: boolean;
+  published?: boolean;
   lastRunAt: string | null;
+  sourceUrl?: string | null;
+  frequency?: string | null;
   organization?: { slug: string; name: string };
   _count?: { runs: number };
 };
@@ -189,6 +192,32 @@ export default function AdminRegistryPage() {
     setMsg("DataSource " + s.slug + " active=" + data.active);
     await load();
   }
+  function freshness(lastRunAt: string | null): {
+    label: string;
+    className: string;
+  } {
+    if (!lastRunAt) {
+      return { label: "Niciodată", className: "text-muted-foreground" };
+    }
+    const days =
+      (Date.now() - new Date(lastRunAt).getTime()) / (1000 * 60 * 60 * 24);
+    if (days > 45) {
+      return {
+        label: "Stale (>45z)",
+        className: "text-red-600 dark:text-red-400 font-medium",
+      };
+    }
+    if (days > 30) {
+      return {
+        label: "Vechi (>30z)",
+        className: "text-amber-600 dark:text-amber-400 font-medium",
+      };
+    }
+    return {
+      label: "Proaspăt",
+      className: "text-green-600 dark:text-green-400 font-medium",
+    };
+  }
 
   return (
     <div className="space-y-8">
@@ -341,36 +370,61 @@ export default function AdminRegistryPage() {
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Data sources</h2>
         <div className="grid gap-3 sm:grid-cols-2">
-          {sources.map((s) => (
-            <Card key={s.id}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">{s.name}</CardTitle>
-              </CardHeader>
-              <CardContent className="text-muted-foreground space-y-1 text-sm">
-                <p>slug: {s.slug}</p>
-                <p>
-                  type: {s.type} · channel: {s.channel}
-                </p>
-                <p>org: {s.organization?.slug ?? "-"}</p>
-                <p>runs: {s._count?.runs ?? "-"}</p>
-                <p>active: {String(s.active)}</p>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => toggleDsActive(s)}
-                >
-                  Toggle active
-                </Button>
-                <p>
-                  lastRun:{" "}
-                  {s.lastRunAt
-                    ? new Date(s.lastRunAt).toLocaleString("ro-RO")
-                    : "-"}
-                </p>
-              </CardContent>
-            </Card>
-          ))}
+          {sources.map((s) => {
+            const fr = freshness(s.lastRunAt);
+            return (
+              <Card key={s.id}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">{s.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="text-muted-foreground space-y-1 text-sm">
+                  <p>slug: {s.slug}</p>
+                  <p>
+                    type: {s.type} · channel: {s.channel}
+                  </p>
+                  <p>org: {s.organization?.slug ?? "-"}</p>
+                  <p>runs: {s._count?.runs ?? "-"}</p>
+                  <p>active: {String(s.active)}</p>
+                  {s.published !== undefined && (
+                    <p>published: {String(s.published)}</p>
+                  )}
+                  <p>frequency: {s.frequency ?? "-"}</p>
+                  <p className="truncate">
+                    sourceUrl:{" "}
+                    {s.sourceUrl ? (
+                      <a
+                        href={s.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-foreground underline"
+                      >
+                        {s.sourceUrl.length > 60
+                          ? s.sourceUrl.slice(0, 57) + "…"
+                          : s.sourceUrl}
+                      </a>
+                    ) : (
+                      "-"
+                    )}
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => toggleDsActive(s)}
+                  >
+                    Toggle active
+                  </Button>
+                  <p>
+                    lastRun:{" "}
+                    {s.lastRunAt
+                      ? new Date(s.lastRunAt).toLocaleString("ro-RO")
+                      : "-"}{" "}
+                    <span className={fr.className}>({fr.label})</span>
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </section>
 
